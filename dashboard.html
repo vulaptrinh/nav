@@ -1550,27 +1550,83 @@
     let currentTxFilter = 'all';
     let currentPlannedFilter = 'all';
 
-    // Format numbers with commas
+    // Format numbers with commas (e.g. 1,000,000)
     function formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
-      return new Intl.NumberFormat('vi-VN').format(Math.round(num));
+      return new Intl.NumberFormat('en-US').format(Math.round(num));
     }
 
     function unformatNumber(str) {
       if (typeof str === 'number') return str;
       if (!str) return 0;
-      return parseFloat(str.replace(/[^\d.-]/g, '')) || 0;
+      return parseFloat(String(str).replace(/,/g, '').replace(/[^\d.-]/g, '')) || 0;
     }
 
-    function setupCommaInput(inputId) {
-      const el = document.getElementById(inputId);
-      if (!el) return;
-      el.addEventListener('input', function(e) {
-        let val = this.value.replace(/[^\d]/g, '');
-        if (val) {
-          this.value = parseInt(val, 10).toLocaleString('vi-VN');
-        } else {
-          this.value = '';
+    function formatCurrencyString(digits) {
+      if (!digits) return '';
+      const normalized = digits.replace(/^0+(?=\d)/, '');
+      return normalized.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function setupCommaInput(inputId, onChangeCallback) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+
+      function formatWithDigitCount(elem, targetDigitCount) {
+        const rawDigits = elem.value.replace(/\D/g, '');
+        const formatted = formatCurrencyString(rawDigits);
+        elem.value = formatted;
+
+        if (!formatted) {
+          elem.setSelectionRange(0, 0);
+          return;
+        }
+
+        let newPos = formatted.length;
+        let count = 0;
+        for (let i = 0; i < formatted.length; i++) {
+          if (/\d/.test(formatted[i])) {
+            count++;
+          }
+          if (count === targetDigitCount) {
+            newPos = i + 1;
+            break;
+          }
+        }
+        if (targetDigitCount === 0) newPos = 0;
+        elem.setSelectionRange(newPos, newPos);
+      }
+
+      input.addEventListener('input', function() {
+        const rawVal = this.value;
+        const curPos = this.selectionStart || 0;
+        const digitsBefore = (rawVal.slice(0, curPos).match(/\d/g) || []).length;
+        formatWithDigitCount(this, digitsBefore);
+        if (typeof onChangeCallback === 'function') {
+          onChangeCallback(this);
+        }
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (this.selectionStart !== this.selectionEnd) return;
+        const pos = this.selectionStart;
+        const val = this.value;
+
+        // When pressing Backspace right after a comma (e.g. 1,|200,000)
+        if (e.key === 'Backspace' && pos > 0 && val[pos - 1] === ',') {
+          e.preventDefault();
+          this.value = val.slice(0, pos - 2) + val.slice(pos);
+          const digitsBefore = (val.slice(0, pos - 2).match(/\d/g) || []).length;
+          formatWithDigitCount(this, digitsBefore);
+          if (typeof onChangeCallback === 'function') onChangeCallback(this);
+        }
+        // When pressing Delete right before a comma (e.g. 1|,200,000)
+        else if (e.key === 'Delete' && pos < val.length && val[pos] === ',') {
+          e.preventDefault();
+          this.value = val.slice(0, pos) + val.slice(pos + 2);
+          const digitsBefore = (val.slice(0, pos).match(/\d/g) || []).length;
+          formatWithDigitCount(this, digitsBefore);
+          if (typeof onChangeCallback === 'function') onChangeCallback(this);
         }
       });
     }
@@ -1714,7 +1770,7 @@
       setupCommaInput('amountInput');
       setupCommaInput('plannedAmountInput');
       setupCommaInput('editPlannedAmountInput');
-      setupCommaInput('actualAmountInput');
+      setupCommaInput('actualAmountInput', () => calculateActualVariance());
 
       await loadCategories();
       await loadData();
