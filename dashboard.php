@@ -956,6 +956,18 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                           </button>
                         <?php endif; ?>
+                        <!-- Edit Button -->
+                        <button 
+                          type="button" 
+                          onclick="openEditPlannedModal(<?= htmlspecialchars(json_encode($pe), ENT_QUOTES, 'UTF-8') ?>)"
+                          class="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+                          title="Sửa thông tin khoản dự kiến này"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <!-- Delete Button -->
                         <button 
                           type="button" 
                           onclick="deletePlannedExpense(<?= $pe['id'] ?>)" 
@@ -2116,6 +2128,296 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
   </div>
 
   <!-- ========================================================= -->
+  <!-- MODAL 8: SỬA KHOẢN CHI DỰ KIẾN (Edit Planned Expense Modal)-->
+  <!-- ========================================================= -->
+  <div id="editPlannedModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-lg p-6 sm:p-7 relative border border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      
+      <!-- Close button -->
+      <button 
+        type="button" 
+        onclick="closeEditPlannedModal()" 
+        class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+        title="Đóng (Esc)"
+      >
+        ✕
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Sửa khoản chi dự kiến</h3>
+          <p class="text-xs text-slate-400">Chỉnh sửa thông tin, chu kỳ hoặc số tiền dự kiến</p>
+        </div>
+      </div>
+
+      <form id="editPlannedForm" onsubmit="submitEditPlannedExpense(event)" class="space-y-4">
+        <input type="hidden" id="editPlannedId" name="id" value="" />
+        
+        <!-- Grid: Category & Subcategory -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Category -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">
+                Danh mục chính <span class="text-rose-400">*</span>
+              </label>
+              <button 
+                type="button" 
+                id="toggleEditPlannedCustomCatBtn"
+                onclick="toggleEditPlannedCustomCat()"
+                class="text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer"
+              >
+                + Tự gõ tên
+              </button>
+            </div>
+            
+            <select 
+              id="editPlannedCategorySelect" 
+              name="category_select"
+              onchange="onEditPlannedCategoryChange(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer"
+            >
+              <option value="">-- Chọn danh mục chính --</option>
+              <?php foreach ($categoriesList as $cat): ?>
+                <?php if ($cat['type'] !== 'income'): ?>
+                  <option value="<?= htmlspecialchars($cat['name']) ?>"><?= htmlspecialchars($cat['name']) ?></option>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              <option value="__custom__">➕ Nhập danh mục khác...</option>
+            </select>
+
+            <input 
+              type="text" 
+              id="editPlannedCategoryCustomInput" 
+              placeholder="Nhập tên danh mục mới..." 
+              class="hidden mt-2 w-full px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-amber-400/50 text-white placeholder-slate-500 focus:outline-none transition"
+            />
+          </div>
+
+          <!-- Subcategory -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">
+                Danh mục chi tiết / con
+              </label>
+              <button 
+                type="button" 
+                id="toggleEditPlannedCustomSubBtn"
+                onclick="toggleEditPlannedCustomSub()"
+                class="text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer"
+              >
+                + Tự gõ con
+              </button>
+            </div>
+
+            <select 
+              id="editPlannedSubcategorySelect" 
+              name="subcategory_select"
+              onchange="onEditPlannedSubcategoryChange(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer"
+            >
+              <option value="">-- Chọn danh mục con (Tùy chọn) --</option>
+              <option value="__custom__">➕ Nhập danh mục con khác...</option>
+            </select>
+
+            <input 
+              type="text" 
+              id="editPlannedSubcategoryCustomInput" 
+              placeholder="Nhập tên danh mục con mới..." 
+              class="hidden mt-2 w-full px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-amber-400/50 text-white placeholder-slate-500 focus:outline-none transition"
+            />
+          </div>
+        </div>
+
+        <!-- Title / Description -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên khoản chi / Nội dung</label>
+          <input 
+            type="text" 
+            id="editPlannedTitle"
+            name="title" 
+            placeholder="VD: Tiền học cho Dâu, Tiền điện nước..." 
+            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition"
+          />
+        </div>
+
+        <!-- Grid: Expected Amount & Expected Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Expected Amount -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">
+              Số tiền dự kiến (VND) <span class="text-rose-400">*</span>
+            </label>
+            <div class="relative">
+              <input 
+                type="text" 
+                inputmode="numeric"
+                id="editPlannedAmountInput"
+                name="expected_amount" 
+                required 
+                autocomplete="off"
+                placeholder="VD: 1,000,000" 
+                class="w-full px-3.5 py-2.5 pr-8 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white font-mono font-bold focus:border-amber-400 focus:outline-none transition"
+              />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none select-none">₫</span>
+            </div>
+          </div>
+
+          <!-- Expected Date -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">
+              Ngày dự kiến bắt đầu <span class="text-rose-400">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="editPlannedExpectedDate"
+              name="expected_date" 
+              required 
+              onchange="onEditPlannedDateChange(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition"
+            />
+          </div>
+        </div>
+
+        <!-- Repeat Frequency Control -->
+        <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+          <label class="block text-xs font-semibold text-amber-300">
+            Chu kỳ lặp lại (Tùy chỉnh xuất hiện)
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="edit_repeat_type" value="monthly" onchange="toggleEditRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">
+                🗓️ Hằng tháng
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="edit_repeat_type" value="weekly" onchange="toggleEditRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">
+                📅 Hằng tuần
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="edit_repeat_type" value="daily" onchange="toggleEditRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">
+                ☀️ Hằng ngày
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="edit_repeat_type" value="custom_days" onchange="toggleEditRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">
+                ⏱️ X ngày / lần
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="edit_repeat_type" value="yearly" onchange="toggleEditRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">
+                🎉 Hằng năm
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="edit_repeat_type" value="once" onchange="toggleEditRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">
+                1️⃣ Một lần duy nhất
+              </div>
+            </label>
+          </div>
+
+          <!-- Dynamic Option: Monthly Day of Month -->
+          <div id="editMonthlyDayWrapper" class="flex items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Xuất hiện vào ngày:</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-amber-300 font-bold">Ngày</span>
+              <input 
+                type="number" 
+                id="editPlannedDayOfMonth"
+                min="1" 
+                max="31" 
+                value="1" 
+                class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none"
+              />
+              <span class="text-xs text-slate-400">hằng tháng để xem</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Option: Weekly / Custom Weeks Interval -->
+          <div id="editWeeklyWrapper" class="hidden flex-wrap items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Chu kỳ lặp:</span>
+            <div class="flex items-center gap-2">
+              <input 
+                type="number" 
+                id="editPlannedWeeklyInterval"
+                min="1" 
+                max="52" 
+                value="4" 
+                class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none"
+              />
+              <span class="text-xs text-amber-300 font-bold">tuần / lần</span>
+            </div>
+            <!-- Quick Chips for Weeks -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" onclick="setEditWeeklyInterval(1)" id="btnEditWeek1" class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">1 tuần</button>
+              <button type="button" onclick="setEditWeeklyInterval(2)" id="btnEditWeek2" class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">2 tuần</button>
+              <button type="button" onclick="setEditWeeklyInterval(4)" id="btnEditWeek4" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 transition cursor-pointer">4 tuần 1 lần ⭐</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Option: Custom Days Interval -->
+          <div id="editCustomDaysWrapper" class="hidden flex-wrap items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Xuất hiện chu kỳ:</span>
+            <div class="flex items-center gap-2">
+              <input 
+                type="number" 
+                id="editPlannedCustomInterval"
+                min="1" 
+                max="365" 
+                value="3" 
+                class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none"
+              />
+              <span class="text-xs text-amber-300 font-bold">ngày xuất hiện 1 lần</span>
+            </div>
+            <!-- Quick Chips for Days -->
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setEditCustomDaysInterval(3)" class="px-2 py-0.5 rounded-md text-[10px] bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">3 ngày</button>
+              <button type="button" onclick="setEditCustomDaysInterval(4)" class="px-2 py-0.5 rounded-md text-[10px] bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">4 ngày</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ghi chú thêm</label>
+          <input 
+            type="text" 
+            id="editPlannedNote"
+            name="note" 
+            placeholder="Ghi chú chi tiết cho khoản chi này..." 
+            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition"
+          />
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-2">
+          <button 
+            type="submit" 
+            id="btnEditPlannedSubmit"
+            class="w-full py-3 rounded-full text-white font-bold text-xs tracking-wide bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 transition cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span>Cập nhật khoản chi dự kiến</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
   <!-- JAVASCRIPT CONTROLLERS                                    -->
   <!-- ========================================================= -->
   <script>
@@ -3010,6 +3312,314 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
       });
     }
 
+    // =========================================================
+    // Edit Planned Expense Modal Controls
+    // =========================================================
+    function openEditPlannedModal(pe) {
+      document.getElementById('editPlannedId').value = pe.id;
+      document.getElementById('editPlannedTitle').value = pe.title || '';
+
+      // Amount
+      const amtInput = document.getElementById('editPlannedAmountInput');
+      amtInput.value = formatCurrencyString(String(Math.round(parseFloat(pe.expected_amount) || 0)));
+
+      // Date
+      document.getElementById('editPlannedExpectedDate').value = pe.expected_date || '';
+
+      // Category
+      const catSelect = document.getElementById('editPlannedCategorySelect');
+      const catCustom = document.getElementById('editPlannedCategoryCustomInput');
+      const toggleCatBtn = document.getElementById('toggleEditPlannedCustomCatBtn');
+
+      catCustom.classList.add('hidden');
+      catCustom.value = '';
+      toggleCatBtn.textContent = '+ Tự gõ tên';
+
+      let catFound = false;
+      for (let opt of catSelect.options) {
+        if (opt.value.toLowerCase() === (pe.category || '').toLowerCase()) {
+          catSelect.value = opt.value;
+          catFound = true;
+          break;
+        }
+      }
+      if (!catFound && pe.category) {
+        catSelect.value = '__custom__';
+        catCustom.classList.remove('hidden');
+        catCustom.value = pe.category;
+        toggleCatBtn.textContent = 'Chọn từ danh sách';
+      }
+
+      // Update subcategories dropdown
+      updateEditPlannedSubcategories(pe.category, pe.subcategory);
+
+      // Repeat type
+      const repeatType = pe.repeat_type || 'monthly';
+      const rad = document.querySelector(`input[name="edit_repeat_type"][value="${repeatType}"]`);
+      if (rad) rad.checked = true;
+      toggleEditRepeatOptions(repeatType);
+
+      // Day of month / interval
+      if (pe.day_of_month) {
+        document.getElementById('editPlannedDayOfMonth').value = pe.day_of_month;
+      }
+      if (repeatType === 'weekly') {
+        setEditWeeklyInterval(pe.repeat_interval || 1);
+      } else if (repeatType === 'custom_days') {
+        setEditCustomDaysInterval(pe.repeat_interval || 3);
+      }
+
+      // Note
+      document.getElementById('editPlannedNote').value = pe.note || '';
+
+      const modal = document.getElementById('editPlannedModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditPlannedModal() {
+      closeModal('editPlannedModal');
+    }
+
+    function onEditPlannedCategoryChange(val) {
+      const customInput = document.getElementById('editPlannedCategoryCustomInput');
+      const toggleBtn = document.getElementById('toggleEditPlannedCustomCatBtn');
+      if (val === '__custom__') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+        if (toggleBtn) toggleBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        if (toggleBtn) toggleBtn.textContent = '+ Tự gõ tên';
+      }
+      updateEditPlannedSubcategories(val);
+    }
+
+    function toggleEditPlannedCustomCat() {
+      const select = document.getElementById('editPlannedCategorySelect');
+      const customInput = document.getElementById('editPlannedCategoryCustomInput');
+      const toggleBtn = document.getElementById('toggleEditPlannedCustomCatBtn');
+
+      if (customInput.classList.contains('hidden')) {
+        customInput.classList.remove('hidden');
+        select.value = '__custom__';
+        toggleBtn.textContent = 'Chọn từ danh sách';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        select.value = '';
+        toggleBtn.textContent = '+ Tự gõ tên';
+        updateEditPlannedSubcategories('');
+      }
+    }
+
+    function updateEditPlannedSubcategories(catName, selectedSub = '') {
+      const subSelect = document.getElementById('editPlannedSubcategorySelect');
+      if (!subSelect) return;
+
+      subSelect.innerHTML = '<option value="">-- Chọn danh mục con (Tùy chọn) --</option>';
+
+      const subs = getSubcategoriesForCategory(catName);
+      let subFound = false;
+
+      subs.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        if (selectedSub && s.toLowerCase() === selectedSub.toLowerCase()) {
+          opt.selected = true;
+          subFound = true;
+        }
+        subSelect.appendChild(opt);
+      });
+
+      const customOpt = document.createElement('option');
+      customOpt.value = '__custom__';
+      customOpt.textContent = '➕ Nhập danh mục con khác...';
+      subSelect.appendChild(customOpt);
+
+      const customSub = document.getElementById('editPlannedSubcategoryCustomInput');
+      const toggleSubBtn = document.getElementById('toggleEditPlannedCustomSubBtn');
+
+      if (selectedSub && !subFound) {
+        subSelect.value = '__custom__';
+        if (customSub) {
+          customSub.classList.remove('hidden');
+          customSub.value = selectedSub;
+        }
+        if (toggleSubBtn) toggleSubBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        if (customSub) {
+          customSub.classList.add('hidden');
+          customSub.value = '';
+        }
+        if (toggleSubBtn) toggleSubBtn.textContent = '+ Tự gõ con';
+      }
+    }
+
+    function onEditPlannedSubcategoryChange(val) {
+      const customSub = document.getElementById('editPlannedSubcategoryCustomInput');
+      const toggleSubBtn = document.getElementById('toggleEditPlannedCustomSubBtn');
+      if (val === '__custom__') {
+        customSub.classList.remove('hidden');
+        customSub.focus();
+        if (toggleSubBtn) toggleSubBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+        if (toggleSubBtn) toggleSubBtn.textContent = '+ Tự gõ con';
+      }
+    }
+
+    function toggleEditPlannedCustomSub() {
+      const select = document.getElementById('editPlannedSubcategorySelect');
+      const customInput = document.getElementById('editPlannedSubcategoryCustomInput');
+      const toggleBtn = document.getElementById('toggleEditPlannedCustomSubBtn');
+
+      if (customInput.classList.contains('hidden')) {
+        customInput.classList.remove('hidden');
+        select.value = '__custom__';
+        toggleBtn.textContent = 'Chọn từ danh sách';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        select.value = '';
+        toggleBtn.textContent = '+ Tự gõ con';
+      }
+    }
+
+    function toggleEditRepeatOptions(repeatType) {
+      const monthlyWrapper = document.getElementById('editMonthlyDayWrapper');
+      const weeklyWrapper = document.getElementById('editWeeklyWrapper');
+      const customWrapper = document.getElementById('editCustomDaysWrapper');
+
+      if (monthlyWrapper) {
+        monthlyWrapper.style.display = (repeatType === 'monthly') ? 'flex' : 'none';
+      }
+      if (weeklyWrapper) {
+        weeklyWrapper.style.display = (repeatType === 'weekly') ? 'flex' : 'none';
+      }
+      if (customWrapper) {
+        customWrapper.style.display = (repeatType === 'custom_days') ? 'flex' : 'none';
+      }
+    }
+
+    function setEditWeeklyInterval(weeks) {
+      const input = document.getElementById('editPlannedWeeklyInterval');
+      if (input) input.value = weeks;
+
+      ['btnEditWeek1', 'btnEditWeek2', 'btnEditWeek4'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer';
+      });
+      const activeBtn = document.getElementById('btnEditWeek' + weeks);
+      if (activeBtn) {
+        activeBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 transition cursor-pointer';
+      }
+    }
+
+    function setEditCustomDaysInterval(days) {
+      const input = document.getElementById('editPlannedCustomInterval');
+      if (input) input.value = days;
+    }
+
+    function onEditPlannedDateChange(dateStr) {
+      if (!dateStr) return;
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const day = parseInt(parts[2], 10);
+        const dayInput = document.getElementById('editPlannedDayOfMonth');
+        if (dayInput) {
+          dayInput.value = day;
+        }
+      }
+    }
+
+    function submitEditPlannedExpense(e) {
+      e.preventDefault();
+      const form = document.getElementById('editPlannedForm');
+      const amountInput = document.getElementById('editPlannedAmountInput');
+      const rawAmount = amountInput ? amountInput.value.replace(/,/g, '').trim() : '';
+
+      if (!rawAmount || isNaN(rawAmount) || parseFloat(rawAmount) <= 0) {
+        showToast('error', 'Vui lòng nhập số tiền dự kiến hợp lệ!');
+        if (amountInput) amountInput.focus();
+        return;
+      }
+
+      const catSelect = document.getElementById('editPlannedCategorySelect');
+      const catCustom = document.getElementById('editPlannedCategoryCustomInput');
+      let finalCat = catSelect ? catSelect.value : '';
+      if (finalCat === '__custom__' || !finalCat) {
+        if (catCustom && catCustom.value.trim()) finalCat = catCustom.value.trim();
+      }
+
+      if (!finalCat) {
+        showToast('error', 'Vui lòng chọn hoặc nhập danh mục chính!');
+        if (catSelect) catSelect.focus();
+        return;
+      }
+
+      const subSelect = document.getElementById('editPlannedSubcategorySelect');
+      const subCustom = document.getElementById('editPlannedSubcategoryCustomInput');
+      let finalSub = subSelect ? subSelect.value : '';
+      if (finalSub === '__custom__' || !finalSub) {
+        if (subCustom && subCustom.value.trim()) finalSub = subCustom.value.trim();
+      }
+      if (finalSub === '__custom__') finalSub = '';
+
+      const formData = new FormData(form);
+      formData.set('expected_amount', rawAmount);
+      formData.set('category', finalCat);
+      formData.set('subcategory', finalSub);
+
+      const repeatType = form.querySelector('input[name="edit_repeat_type"]:checked')?.value || 'monthly';
+      formData.set('repeat_type', repeatType);
+
+      let interval = 1;
+      if (repeatType === 'weekly') {
+        interval = parseInt(document.getElementById('editPlannedWeeklyInterval')?.value || 1, 10);
+      } else if (repeatType === 'custom_days') {
+        interval = parseInt(document.getElementById('editPlannedCustomInterval')?.value || 1, 10);
+      }
+      formData.set('repeat_interval', Math.max(1, interval));
+
+      if (repeatType === 'monthly') {
+        const dom = parseInt(document.getElementById('editPlannedDayOfMonth')?.value || 1, 10);
+        formData.set('day_of_month', dom);
+      }
+
+      const btn = document.getElementById('btnEditPlannedSubmit');
+      btn.disabled = true;
+      btn.innerHTML = '<span>Đang cập nhật...</span>';
+
+      fetch('edit_planned_expense.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span>Cập nhật khoản chi dự kiến</span>`;
+        if (data.success) {
+          showToast('success', data.message);
+          closeEditPlannedModal();
+          setTimeout(() => location.reload(), 600);
+        } else {
+          showToast('error', data.message);
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Cập nhật khoản chi dự kiến</span>';
+        showToast('error', 'Lỗi khi cập nhật khoản chi dự kiến!');
+      });
+    }
+
     // Actual Expense Modal Controls
     function openActualExpenseModal(pe) {
       document.getElementById('actualModalPlannedId').value = pe.id;
@@ -3228,6 +3838,7 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
     function initAmountFormatting() {
       bindAmountFormatting(document.getElementById('amountInput'));
       bindAmountFormatting(document.getElementById('plannedAmountInput'));
+      bindAmountFormatting(document.getElementById('editPlannedAmountInput'));
       bindAmountFormatting(document.getElementById('actualAmountInput'), () => updateActualVariance());
     }
 
