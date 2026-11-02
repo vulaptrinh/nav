@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CashTrack - Quản lý tài chính cá nhân</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Supabase JS Client & Config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              cyan: '#00d2ff',
+              blue: '#0066ff',
+              navy: '#0b101d',
+              dark: '#060913',
+              sidebar: '#090e1c',
+              card: '#0d1322',
+              input: '#121826',
+              border: '#1c2538'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #060913;
+      color: #f1f5f9;
+      min-height: 100vh;
+      overflow-x: hidden;
+      margin: 0;
+    }
+
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: 
+        radial-gradient(circle at 10% 15%, rgba(0, 210, 255, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 90% 85%, rgba(0, 102, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(13, 19, 34, 0.95) 0%, #060913 100%);
+    }
+
+    .bg-grid-lines {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: 
+        linear-gradient(to right, #ffffff 1px, transparent 1px),
+        linear-gradient(to bottom, #ffffff 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+
+    .card-glass {
+      background: rgba(13, 19, 34, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 24px;
+      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-gradient {
+      background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
+      box-shadow: 0 8px 24px -4px rgba(0, 114, 255, 0.45);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-gradient:hover {
+      box-shadow: 0 12px 28px -2px rgba(0, 114, 255, 0.65);
+      transform: translateY(-1.5px);
+      filter: brightness(1.05);
+    }
+
+    .app-input {
+      background: rgba(18, 24, 38, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      transition: all 0.2s ease;
+      color: #ffffff;
+    }
+
+    .app-input:focus {
+      background: rgba(22, 31, 51, 0.98);
+      border-color: #00d2ff;
+      box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.16);
+      outline: none;
+    }
+
+    #toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 100;
+      transform: translateY(-80px);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="relative">
+
+  <div class="bg-mesh"></div>
+  <div class="bg-grid-lines"></div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold">
+    <div id="toast-icon"></div>
+    <div id="toast-message"></div>
+  </div>
+
+  <!-- Backdrop for Mobile Sidebar -->
+  <div id="sidebarBackdrop" onclick="toggleSidebar(false)" class="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm hidden lg:hidden"></div>
+
+  <!-- Main Container -->
+  <div class="min-h-screen flex flex-col lg:flex-row relative z-10">
+
+    <!-- VERTICAL SIDEBAR -->
+    <aside id="sidebar" class="fixed top-0 bottom-0 left-0 z-40 w-72 h-screen bg-[#080d1b]/95 backdrop-blur-2xl border-r border-white/[0.08] flex flex-col justify-between -translate-x-full lg:translate-x-0 shadow-2xl transition-transform duration-300">
+      
+      <div class="p-5 flex flex-col h-full overflow-y-auto">
+        <!-- Logo -->
+        <div class="flex items-center justify-between pb-6 mb-4 border-b border-white/[0.07]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/30 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_18px_rgba(0,210,255,0.3)] shrink-0">
+              <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <circle cx="12" cy="13" r="3" stroke-width="2" />
+              </svg>
+            </div>
+            <div>
+              <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-cyan-300 bg-clip-text text-transparent">
+                CashTrack
+              </span>
+              <div class="text-[10px] text-cyan-400 font-mono tracking-wider">SUPABASE POSTGRESQL</div>
+            </div>
+          </div>
+          <!-- Close button for mobile -->
+          <button type="button" onclick="toggleSidebar(false)" class="lg:hidden w-8 h-8 rounded-xl bg-white/[0.05] text-slate-400 hover:text-white flex items-center justify-center">
+            ✕
+          </button>
+        </div>
+
+        <!-- Quick Add Button -->
+        <div class="mb-5">
+          <button 
+            type="button" 
+            onclick="openAddModal('expense')" 
+            class="btn-gradient w-full py-3 px-3.5 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Thêm giao dịch mới</span>
+          </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="space-y-1.5 flex-1">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-2">Menu chính</div>
+          
+          <a href="#statsSection" class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-400/25">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span>Tổng quan tài chính</span>
+            <span class="ml-auto w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          </a>
+
+          <a href="#transactionSection" class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04]">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            <span>Lịch sử thu chi</span>
+            <span id="navTransCount" class="ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">0</span>
+          </a>
+
+          <a href="#plannedExpenseSection" class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04]">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Chi tiêu dự kiến</span>
+            <span id="navPlannedCount" class="ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">0 chờ</span>
+          </a>
+        </div>
+
+        <!-- User Info & Logout on Sidebar Bottom -->
+        <div class="pt-4 border-t border-white/[0.08] flex items-center justify-between">
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              U
+            </div>
+            <div class="truncate">
+              <div id="userEmail" class="text-xs font-bold text-white truncate">Đang tải...</div>
+              <div class="text-[10px] text-cyan-400">Online &bull; RLS Active</div>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onclick="handleLogout()" 
+            class="p-2 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition"
+            title="Đăng xuất"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="flex-1 lg:pl-72 flex flex-col min-w-0">
+      
+      <!-- Top Header -->
+      <header class="sticky top-0 z-30 bg-[#060913]/85 backdrop-blur-xl border-b border-white/[0.08] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <!-- Mobile Menu Toggle Button -->
+          <button 
+            type="button" 
+            onclick="toggleSidebar(true)" 
+            class="lg:hidden p-2 rounded-xl bg-white/[0.05] text-slate-300 hover:text-white"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
+          <h1 class="text-lg sm:text-xl font-bold text-white">Dashboard Quản Lý Thu Chi</h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button 
+            type="button" 
+            onclick="openAddPlannedModal()" 
+            class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-xs font-bold text-amber-300 transition"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>+ Kế hoạch chi</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="openAddModal('income')" 
+            class="px-3.5 py-2 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs font-bold text-emerald-300 transition flex items-center gap-1.5"
+          >
+            <span>+ Thu nhập</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="openAddModal('expense')" 
+            class="btn-gradient px-4 py-2 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>+ Thêm chi phí</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Body -->
+      <main class="p-4 sm:p-8 space-y-8 flex-1 max-w-7xl w-full mx-auto">
+        
+        <!-- STATS SECTION -->
+        <section id="statsSection" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              Dòng tiền tổng quan <span>💎</span>
+            </h2>
+            <div class="text-xs text-slate-400 flex items-center gap-2 bg-white/[0.04] px-3 py-1 rounded-full border border-white/5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>PostgreSQL Realtime</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Balance -->
+            <div class="card-glass p-5 relative overflow-hidden group hover:border-cyan-500/40 transition">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span>Số dư khả dụng</span>
+                <span class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">💵</span>
+              </div>
+              <div id="statBalance" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-white">0 ₫</div>
+              <div id="statBalanceLabel" class="text-[11px] text-cyan-400 mt-2 font-medium">Đang đồng bộ...</div>
+            </div>
+
+            <!-- Card 2: Income -->
+            <div class="card-glass p-5 relative overflow-hidden group hover:border-emerald-500/40 transition">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span>Tổng Thu Nhập</span>
+                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">📈</span>
+              </div>
+              <div id="statIncome" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-emerald-400">0 ₫</div>
+              <div class="text-[11px] text-slate-400 mt-2">Dòng tiền thực thu</div>
+            </div>
+
+            <!-- Card 3: Expense -->
+            <div class="card-glass p-5 relative overflow-hidden group hover:border-rose-500/40 transition">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span>Tổng Chi Tiêu</span>
+                <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">📉</span>
+              </div>
+              <div id="statExpense" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-rose-400">0 ₫</div>
+              <div class="text-[11px] text-slate-400 mt-2">Khoản đã thanh toán</div>
+            </div>
+
+            <!-- Card 4: Planned Stats -->
+            <div class="card-glass p-5 relative overflow-hidden group hover:border-amber-500/40 transition">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span>Chi Tiêu Dự Kiến</span>
+                <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">📅</span>
+              </div>
+              <div id="statPlanned" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-amber-400">0 ₫</div>
+              <div id="statPlannedSub" class="text-[11px] text-amber-300/80 mt-2">0 khoản chờ duyệt</div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- PLANNED EXPENSES SECTION -->
+        <section id="plannedExpenseSection" class="card-glass p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                Kế hoạch chi tiêu sắp tới <span class="text-amber-400">⏰</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Theo dõi các khoản cần chi tiêu để cân đối nguồn tiền</p>
+            </div>
+            <button 
+              type="button" 
+              onclick="openAddPlannedModal()" 
+              class="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-xs font-semibold text-amber-300 w-fit"
+            >
+              + Thêm kế hoạch mới
+            </button>
+          </div>
+
+          <div id="plannedList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="text-center py-6 text-slate-500 text-xs col-span-full">Đang tải kế hoạch chi...</div>
+          </div>
+        </section>
+
+        <!-- TRANSACTIONS SECTION -->
+        <section id="transactionSection" class="card-glass p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                Lịch sử giao dịch thu - chi <span>📜</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Dữ liệu được lưu trữ bảo mật trên Supabase PostgreSQL</p>
+            </div>
+
+            <!-- Filters & Search -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <!-- Filter Type -->
+              <div class="flex rounded-xl bg-white/[0.04] p-1 border border-white/10 text-xs font-medium">
+                <button type="button" onclick="filterTransactions('all')" id="btnFilterAll" class="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold">Tất cả</button>
+                <button type="button" onclick="filterTransactions('income')" id="btnFilterIncome" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">Thu</button>
+                <button type="button" onclick="filterTransactions('expense')" id="btnFilterExpense" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">Chi</button>
+              </div>
+
+              <!-- Search Box -->
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="searchInput" 
+                  placeholder="Tìm giao dịch..." 
+                  oninput="handleSearch(this.value)"
+                  class="app-input py-1.5 pl-8 pr-3 rounded-xl text-xs w-44 placeholder:text-slate-500"
+                />
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transaction Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-slate-400 border-b border-white/[0.06] pb-2">
+                  <th class="py-3 px-3">Ngày</th>
+                  <th class="py-3 px-3">Loại</th>
+                  <th class="py-3 px-3">Danh mục</th>
+                  <th class="py-3 px-3">Ghi chú</th>
+                  <th class="py-3 px-3 text-right">Số tiền</th>
+                  <th class="py-3 px-3 text-center">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="transactionTableBody" class="divide-y divide-white/[0.04]">
+                <tr>
+                  <td colspan="6" class="py-8 text-center text-slate-500">Đang tải dữ liệu từ Supabase...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD TRANSACTION -->
+  <div id="addModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="card-glass w-full max-w-md p-6 relative border border-cyan-500/20 shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span id="modalAddTitle">Thêm giao dịch mới</span>
+        </h3>
+        <button type="button" onclick="closeModal('addModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+      </div>
+
+      <form id="addTransForm" onsubmit="submitTransaction(event)" class="space-y-4">
+        <!-- Type Selection -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Loại giao dịch</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-white/10 cursor-pointer bg-white/[0.03] has-[:checked]:bg-emerald-500/20 has-[:checked]:border-emerald-500/50 has-[:checked]:text-emerald-300">
+              <input type="radio" name="transType" value="income" class="hidden" onchange="updateCategorySelect('income')">
+              <span class="text-xs font-bold">+ Thu nhập</span>
+            </label>
+            <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-white/10 cursor-pointer bg-white/[0.03] has-[:checked]:bg-rose-500/20 has-[:checked]:border-rose-500/50 has-[:checked]:text-rose-300">
+              <input type="radio" name="transType" value="expense" checked class="hidden" onchange="updateCategorySelect('expense')">
+              <span class="text-xs font-bold">- Chi tiêu</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Số tiền (VNĐ)</label>
+          <input 
+            type="number" 
+            id="transAmount" 
+            required 
+            min="1000" 
+            step="1000" 
+            placeholder="Ví dụ: 150000" 
+            class="app-input w-full px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold"
+          />
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Danh mục</label>
+          <select id="transCategory" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs">
+            <option value="">Chọn danh mục...</option>
+          </select>
+        </div>
+
+        <!-- Date -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ngày thực hiện</label>
+          <input type="date" id="transDate" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ghi chú (Tùy chọn)</label>
+          <input type="text" id="transNote" placeholder="Ví dụ: Tiền ăn trưa đối tác..." class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-2">
+          <button type="submit" id="btnSubmitTrans" class="btn-gradient w-full py-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2">
+            <span>Lưu giao dịch</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD PLANNED EXPENSE -->
+  <div id="addPlannedModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="card-glass w-full max-w-md p-6 relative border border-amber-500/20 shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span class="text-amber-400">📅</span> Thêm kế hoạch chi tiêu
+        </h3>
+        <button type="button" onclick="closeModal('addPlannedModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+      </div>
+
+      <form id="addPlannedForm" onsubmit="submitPlannedExpense(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Tên khoản chi</label>
+          <input type="text" id="plannedTitle" required placeholder="Ví dụ: Tiền đóng học phí, Tiền thuê nhà..." class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Số tiền dự kiến (VNĐ)</label>
+          <input type="number" id="plannedAmount" required min="1000" step="1000" placeholder="Ví dụ: 3000000" class="app-input w-full px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Danh mục</label>
+          <select id="plannedCategory" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs">
+            <option value="">Chọn danh mục...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ngày dự kiến thanh toán</label>
+          <input type="date" id="plannedDate" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ghi chú</label>
+          <input type="text" id="plannedNote" placeholder="Ghi chú chi tiết nếu có..." class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnSubmitPlanned" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition">
+            <span>Tạo kế hoạch chi</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    let currentUser = null;
+    let allTransactions = [];
+    let allPlanned = [];
+    let allCategories = [];
+    let currentFilter = 'all';
+
+    // Toast helper
+    let toastTimeout;
+    function showToast(type, msg) {
+      const toast = document.getElementById("toast");
+      const icon = document.getElementById("toast-icon");
+      const message = document.getElementById("toast-message");
+      clearTimeout(toastTimeout);
+
+      if (type === "success") {
+        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-emerald-950/85 border-emerald-500/30 text-emerald-300 show";
+        icon.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+      } else {
+        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-rose-950/85 border-rose-500/30 text-rose-300 show";
+        icon.innerHTML = `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+      }
+      message.textContent = msg;
+      toastTimeout = setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+
+    function toggleSidebar(open) {
+      const sidebar = document.getElementById("sidebar");
+      const backdrop = document.getElementById("sidebarBackdrop");
+      if (open) {
+        sidebar.classList.remove("-translate-x-full");
+        backdrop.classList.remove("hidden");
+      } else {
+        sidebar.classList.add("-translate-x-full");
+        backdrop.classList.add("hidden");
+      }
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    function openAddModal(type = 'expense') {
+      const radios = document.getElementsByName("transType");
+      for (let r of radios) {
+        r.checked = (r.value === type);
+      }
+      document.getElementById("transDate").value = new Date().toISOString().slice(0, 10);
+      updateCategorySelect(type);
+      openModal("addModal");
+    }
+
+    function openAddPlannedModal() {
+      document.getElementById("plannedDate").value = new Date().toISOString().slice(0, 10);
+      populatePlannedCategories();
+      openModal("addPlannedModal");
+    }
+
+    function formatVND(amount) {
+      return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('vi-VN');
+    }
+
+    // Category Population
+    function updateCategorySelect(type) {
+      const select = document.getElementById("transCategory");
+      select.innerHTML = '<option value="">Chọn danh mục...</option>';
+      const filtered = allCategories.filter(c => c.type === type || c.type === 'both');
+      filtered.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+    }
+
+    function populatePlannedCategories() {
+      const select = document.getElementById("plannedCategory");
+      select.innerHTML = '<option value="">Chọn danh mục...</option>';
+      const filtered = allCategories.filter(c => c.type === 'expense' || c.type === 'both');
+      filtered.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+    }
+
+    // Auth & Init
+    async function initApp() {
+      if (!supabaseClient) {
+        showToast("error", "Lỗi cấu hình Supabase!");
+        return;
+      }
+
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      currentUser = session.user;
+      document.getElementById("userEmail").textContent = currentUser.email;
+      document.getElementById("userAvatar").textContent = currentUser.email.charAt(0).toUpperCase();
+
+      await loadCategories();
+      await loadData();
+    }
+
+    async function handleLogout() {
+      if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+        await supabaseClient.auth.signOut();
+        window.location.href = "index.html";
+      }
+    }
+
+    // Load Categories from Supabase
+    async function loadCategories() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("categories")
+          .select("*")
+          .order("name");
+        if (!error && data) {
+          allCategories = data;
+        }
+      } catch (err) {
+        console.error("Load categories error:", err);
+      }
+    }
+
+    // Load Transactions & Planned Expenses
+    async function loadData() {
+      try {
+        // Fetch Transactions
+        const { data: trans, error: errTrans } = await supabaseClient
+          .from("transactions")
+          .select("*")
+          .order("transaction_date", { ascending: false })
+          .order("id", { ascending: false });
+
+        if (!errTrans && trans) {
+          allTransactions = trans;
+        }
+
+        // Fetch Planned Expenses
+        const { data: planned, error: errPlan } = await supabaseClient
+          .from("planned_expenses")
+          .select("*")
+          .order("expected_date", { ascending: true });
+
+        if (!errPlan && planned) {
+          allPlanned = planned;
+        }
+
+        renderStats();
+        renderTransactions();
+        renderPlanned();
+      } catch (err) {
+        console.error("Load data error:", err);
+        showToast("error", "Lỗi nạp dữ liệu: " + err.message);
+      }
+    }
+
+    // Calculate and Render Stats
+    function renderStats() {
+      let income = 0;
+      let expense = 0;
+
+      allTransactions.forEach(t => {
+        const val = parseFloat(t.amount) || 0;
+        if (t.type === 'income') income += val;
+        else if (t.type === 'expense') expense += val;
+      });
+
+      const balance = income - expense;
+
+      document.getElementById("statBalance").textContent = (balance < 0 ? '-' : '') + formatVND(Math.abs(balance));
+      document.getElementById("statBalance").className = "text-2xl sm:text-3xl font-extrabold font-mono tracking-tight " + (balance >= 0 ? "text-cyan-300" : "text-rose-400");
+      document.getElementById("statBalanceLabel").textContent = balance >= 0 ? "▲ Ngân sách thặng dư tốt" : "▼ Cảnh báo bội chi tài chính";
+      document.getElementById("statBalanceLabel").className = "text-[11px] font-semibold mt-2 " + (balance >= 0 ? "text-emerald-400" : "text-rose-400");
+
+      document.getElementById("statIncome").textContent = "+" + formatVND(income);
+      document.getElementById("statExpense").textContent = "-" + formatVND(expense);
+
+      // Planned stats
+      let plannedPendingTotal = 0;
+      let pendingCount = 0;
+      allPlanned.forEach(p => {
+        if (p.status === 'pending') {
+          plannedPendingTotal += parseFloat(p.expected_amount) || 0;
+          pendingCount++;
+        }
+      });
+
+      document.getElementById("statPlanned").textContent = formatVND(plannedPendingTotal);
+      document.getElementById("statPlannedSub").textContent = `${pendingCount} khoản cần thanh toán`;
+
+      document.getElementById("navTransCount").textContent = allTransactions.length;
+      document.getElementById("navPlannedCount").textContent = `${pendingCount} chờ`;
+    }
+
+    // Render Transactions Table
+    function renderTransactions() {
+      const tbody = document.getElementById("transactionTableBody");
+      const searchVal = document.getElementById("searchInput").value.trim().toLowerCase();
+
+      let list = allTransactions.filter(t => {
+        if (currentFilter !== 'all' && t.type !== currentFilter) return false;
+        if (searchVal) {
+          const matchCat = (t.category || '').toLowerCase().includes(searchVal);
+          const matchNote = (t.note || '').toLowerCase().includes(searchVal);
+          return matchCat || matchNote;
+        }
+        return true;
+      });
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500">Chưa có giao dịch nào được ghi nhận</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(t => {
+        const isIncome = t.type === 'income';
+        const colorClass = isIncome ? 'text-emerald-400' : 'text-rose-400';
+        const sign = isIncome ? '+' : '-';
+        const badgeClass = isIncome ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border-rose-500/20';
+        const badgeLabel = isIncome ? 'Thu nhập' : 'Chi tiêu';
+
+        return `
+          <tr class="hover:bg-white/[0.02] transition">
+            <td class="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">${formatDate(t.transaction_date)}</td>
+            <td class="py-3 px-3">
+              <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold ${badgeClass}">
+                ${badgeLabel}
+              </span>
+            </td>
+            <td class="py-3 px-3 font-semibold text-white">${t.category}</td>
+            <td class="py-3 px-3 text-slate-400 max-w-xs truncate">${t.note || '—'}</td>
+            <td class="py-3 px-3 text-right font-mono font-bold ${colorClass}">
+              ${sign}${formatVND(t.amount)}
+            </td>
+            <td class="py-3 px-3 text-center">
+              <button 
+                onclick="deleteTransaction(${t.id})" 
+                class="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                title="Xóa giao dịch này"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Filter & Search
+    function filterTransactions(type) {
+      currentFilter = type;
+      document.getElementById("btnFilterAll").className = type === 'all' ? "px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold" : "px-3 py-1 rounded-lg text-slate-400 hover:text-white";
+      document.getElementById("btnFilterIncome").className = type === 'income' ? "px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold" : "px-3 py-1 rounded-lg text-slate-400 hover:text-white";
+      document.getElementById("btnFilterExpense").className = type === 'expense' ? "px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300 font-bold" : "px-3 py-1 rounded-lg text-slate-400 hover:text-white";
+      renderTransactions();
+    }
+
+    function handleSearch(val) {
+      renderTransactions();
+    }
+
+    // Render Planned Expenses Cards
+    function renderPlanned() {
+      const container = document.getElementById("plannedList");
+      if (allPlanned.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs col-span-full">Chưa có kế hoạch chi tiêu nào</div>`;
+        return;
+      }
+
+      container.innerHTML = allPlanned.map(p => {
+        const isDone = p.status === 'completed';
+        const borderStyle = isDone ? 'border-white/10 opacity-60' : 'border-amber-500/30 bg-amber-500/[0.03]';
+        const statusBadge = isDone 
+          ? `<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">Đã chi trả</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">Chờ thanh toán</span>`;
+
+        return `
+          <div class="card-glass p-4 rounded-2xl border ${borderStyle} flex flex-col justify-between space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h4 class="text-xs font-bold text-white ${isDone ? 'line-through text-slate-400' : ''}">${p.title}</h4>
+                <div class="text-[11px] text-cyan-400">${p.category}</div>
+              </div>
+              ${statusBadge}
+            </div>
+
+            <div class="flex items-baseline justify-between">
+              <span class="text-xs text-slate-400">Dự kiến:</span>
+              <span class="text-sm font-bold font-mono text-amber-300">${formatVND(p.expected_amount)}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-white/[0.06]">
+              <span>Hạn: <strong class="text-white">${formatDate(p.expected_date)}</strong></span>
+              <div class="flex items-center gap-1.5">
+                <button 
+                  onclick="togglePlannedStatus(${p.id}, '${isDone ? 'pending' : 'completed'}', ${p.expected_amount})" 
+                  class="px-2 py-1 rounded-lg text-[10px] font-semibold ${isDone ? 'bg-white/5 text-slate-300' : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'} transition"
+                >
+                  ${isDone ? 'Mở lại' : 'Hoàn thành'}
+                </button>
+                <button 
+                  onclick="deletePlannedExpense(${p.id})" 
+                  class="p-1 text-slate-500 hover:text-rose-400 transition"
+                  title="Xóa kế hoạch"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Submit New Transaction to Supabase
+    async function submitTransaction(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSubmitTrans");
+      btn.disabled = true;
+      btn.textContent = "Đang lưu...";
+
+      const type = document.querySelector('input[name="transType"]:checked').value;
+      const amount = parseFloat(document.getElementById("transAmount").value);
+      const category = document.getElementById("transCategory").value;
+      const transaction_date = document.getElementById("transDate").value;
+      const note = document.getElementById("transNote").value.trim();
+
+      try {
+        const { error } = await supabaseClient.from("transactions").insert([
+          {
+            user_id: currentUser.id,
+            type,
+            amount,
+            category,
+            transaction_date,
+            note: note || null
+          }
+        ]);
+
+        if (error) throw error;
+
+        showToast("success", "Đã thêm giao dịch mới thành công!");
+        closeModal("addModal");
+        document.getElementById("addTransForm").reset();
+        await loadData();
+      } catch (err) {
+        showToast("error", "Lỗi: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Lưu giao dịch";
+      }
+    }
+
+    // Delete Transaction
+    async function deleteTransaction(id) {
+      if (!confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return;
+      try {
+        const { error } = await supabaseClient.from("transactions").delete().eq("id", id);
+        if (error) throw error;
+        showToast("success", "Đã xóa giao dịch!");
+        await loadData();
+      } catch (err) {
+        showToast("error", "Không thể xóa: " + err.message);
+      }
+    }
+
+    // Submit Planned Expense to Supabase
+    async function submitPlannedExpense(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSubmitPlanned");
+      btn.disabled = true;
+      btn.textContent = "Đang tạo...";
+
+      const title = document.getElementById("plannedTitle").value.trim();
+      const expected_amount = parseFloat(document.getElementById("plannedAmount").value);
+      const category = document.getElementById("plannedCategory").value;
+      const expected_date = document.getElementById("plannedDate").value;
+      const note = document.getElementById("plannedNote").value.trim();
+
+      try {
+        const { error } = await supabaseClient.from("planned_expenses").insert([
+          {
+            user_id: currentUser.id,
+            title,
+            expected_amount,
+            category,
+            expected_date,
+            status: 'pending',
+            note: note || null
+          }
+        ]);
+
+        if (error) throw error;
+
+        showToast("success", "Đã tạo kế hoạch chi tiêu mới!");
+        closeModal("addPlannedModal");
+        document.getElementById("addPlannedForm").reset();
+        await loadData();
+      } catch (err) {
+        showToast("error", "Lỗi: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Tạo kế hoạch chi";
+      }
+    }
+
+    // Toggle Planned Expense Status
+    async function togglePlannedStatus(id, newStatus, amount) {
+      try {
+        const { error } = await supabaseClient
+          .from("planned_expenses")
+          .update({
+            status: newStatus,
+            actual_amount: newStatus === 'completed' ? amount : null
+          })
+          .eq("id", id);
+
+        if (error) throw error;
+
+        showToast("success", newStatus === 'completed' ? "Đã đánh dấu hoàn thành!" : "Đã chuyển về trạng thái chờ!");
+        await loadData();
+      } catch (err) {
+        showToast("error", "Lỗi: " + err.message);
+      }
+    }
+
+    // Delete Planned Expense
+    async function deletePlannedExpense(id) {
+      if (!confirm("Bạn có chắc chắn muốn xóa kế hoạch này?")) return;
+      try {
+        const { error } = await supabaseClient.from("planned_expenses").delete().eq("id", id);
+        if (error) throw error;
+        showToast("success", "Đã xóa kế hoạch chi tiêu!");
+        await loadData();
+      } catch (err) {
+        showToast("error", "Không thể xóa: " + err.message);
+      }
+    }
+
+    // Run on startup
+    window.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>

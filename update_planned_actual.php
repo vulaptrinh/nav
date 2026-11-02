@@ -36,9 +36,11 @@ function calculateNextDueDate($currentDate, $repeatType, $interval = 1, $dayOfMo
     $time = strtotime($currentDate);
     switch ($repeatType) {
         case 'daily':
-            return date('Y-m-d', strtotime('+1 day', $time));
+            $days = max(1, intval($interval));
+            return date('Y-m-d', strtotime("+$days days", $time));
         case 'weekly':
-            return date('Y-m-d', strtotime('+1 week', $time));
+            $weeks = max(1, intval($interval));
+            return date('Y-m-d', strtotime("+$weeks weeks", $time));
         case 'monthly':
             $y = intval(date('Y', $time));
             $m = intval(date('m', $time));

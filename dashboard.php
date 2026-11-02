@@ -92,9 +92,11 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
         case 'monthly':
             return 'Hằng tháng' . ($dayOfMonth ? " (ngày " . sprintf('%02d', $dayOfMonth) . ")" : "");
         case 'weekly':
-            return 'Hằng tuần';
+            $w = max(1, intval($interval ?? 1));
+            return $w > 1 ? "$w tuần / lần" : "Hằng tuần";
         case 'daily':
-            return 'Hằng ngày';
+            $d = max(1, intval($interval ?? 1));
+            return $d > 1 ? "$d ngày / lần" : "Hằng ngày";
         case 'yearly':
             return 'Hằng năm';
         case 'custom_days':
@@ -1155,33 +1157,49 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
           </label>
         </div>
 
-        <!-- Category Field with "Thêm" button next to input -->
+        <!-- Category Field with Dropdown Select + "+ Thêm" button -->
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="block text-xs font-semibold text-slate-300">Danh mục</label>
-            <span class="text-[10px] text-slate-400">Chọn gợi ý hoặc bấm nút Thêm</span>
+            <label class="block text-xs font-semibold text-slate-300">Danh mục <span class="text-rose-400">*</span></label>
+            <button 
+              type="button" 
+              id="toggleTxCustomCatBtn"
+              onclick="toggleTxCustomCat()" 
+              class="text-[11px] text-cyan-400 hover:text-cyan-300 transition cursor-pointer"
+            >
+              + Tự gõ tên
+            </button>
           </div>
 
-          <!-- Input + Add Button Container -->
+          <!-- Select + Add Button Container -->
           <div class="flex items-center gap-2">
             <div class="relative flex-1">
+              <select 
+                id="categorySelect" 
+                name="category_select"
+                onchange="onTxCategoryChange(this.value)"
+                class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-cyan-400 focus:outline-none transition cursor-pointer"
+              >
+                <option value="">-- Chọn danh mục --</option>
+                <?php foreach ($categoriesList as $cat): ?>
+                  <option value="<?= htmlspecialchars($cat['name']) ?>" data-type="<?= $cat['type'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
+                <?php endforeach; ?>
+                <option value="__custom__">➕ Nhập danh mục khác...</option>
+              </select>
+
               <input 
                 type="text" 
-                id="categoryInput"
-                name="category" 
-                required 
-                list="categoryList" 
-                placeholder="VD: Lương, Bán hàng, Tiền phòng, Ăn uống..." 
-                oninput="syncTxSubcategories(this.value)"
-                class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none transition"
+                id="categoryCustomInput" 
+                placeholder="Nhập tên danh mục mới..." 
+                class="hidden mt-2 w-full px-4 py-2 rounded-xl text-xs bg-slate-900 border border-cyan-400/50 text-white placeholder-slate-500 focus:outline-none"
               />
             </div>
             
-            <!-- Nút Thêm danh mục phía sau input -->
+            <!-- Nút Thêm danh mục phía sau -->
             <button 
               type="button" 
               onclick="openAddCategoryModal()" 
-              class="px-3.5 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition shrink-0 shadow-sm active:scale-95 cursor-pointer"
+              class="px-3.5 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition shrink-0 shadow-sm active:scale-95 cursor-pointer self-start"
               title="Thêm danh mục mới vào danh sách"
             >
               <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1190,36 +1208,39 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
               <span>Thêm</span>
             </button>
           </div>
-
-          <!-- Datalist gợi ý từ Database -->
-          <datalist id="categoryList">
-            <?php foreach ($categoriesList as $cat): ?>
-              <option value="<?= htmlspecialchars($cat['name']) ?>"><?= htmlspecialchars($cat['type'] === 'income' ? ' [Thu nhập]' : ($cat['type'] === 'expense' ? ' [Khoản chi]' : ' [Dùng chung]')) ?></option>
-            <?php endforeach; ?>
-          </datalist>
         </div>
 
         <!-- Subcategory Field (Danh mục chi tiết / con) -->
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="block text-xs font-semibold text-slate-300">Danh mục chi tiết / con (Tùy chọn)</label>
-            <span class="text-[10px] text-cyan-400">Gợi ý theo danh mục cha hoặc tự gõ</span>
+            <button 
+              type="button" 
+              id="toggleTxCustomSubBtn"
+              onclick="toggleTxCustomSub()" 
+              class="text-[11px] text-cyan-400 hover:text-cyan-300 transition cursor-pointer"
+            >
+              + Tự gõ con
+            </button>
           </div>
-          <div class="relative">
+          <div>
+            <select 
+              id="subcategorySelect" 
+              name="subcategory_select"
+              onchange="onTxSubcategoryChange(this.value)"
+              class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-cyan-400 focus:outline-none transition cursor-pointer"
+            >
+              <option value="">-- Chọn danh mục con (Tùy chọn) --</option>
+              <option value="__custom__">➕ Nhập danh mục con khác...</option>
+            </select>
+
             <input 
               type="text" 
-              id="subcategoryInput"
-              name="subcategory" 
-              list="subcategoryList" 
-              placeholder="VD: Tiền học, Tiền phòng, Ăn vặt..." 
-              class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none transition"
+              id="subcategoryCustomInput" 
+              placeholder="Nhập tên danh mục con mới..." 
+              class="hidden mt-2 w-full px-4 py-2 rounded-xl text-xs bg-slate-900 border border-cyan-400/50 text-white placeholder-slate-500 focus:outline-none"
             />
           </div>
-          <datalist id="subcategoryList">
-            <?php foreach ($subcategoriesList as $sub): ?>
-              <option value="<?= htmlspecialchars($sub['name']) ?>"></option>
-            <?php endforeach; ?>
-          </datalist>
         </div>
 
         <!-- Amount -->
@@ -1709,44 +1730,75 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- Category -->
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">
-              Danh mục chính <span class="text-rose-400">*</span>
-            </label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">
+                Danh mục chính <span class="text-rose-400">*</span>
+              </label>
+              <button 
+                type="button" 
+                id="togglePlannedCustomCatBtn"
+                onclick="togglePlannedCustomCat()"
+                class="text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer"
+              >
+                + Tự gõ tên
+              </button>
+            </div>
+            
+            <select 
+              id="plannedCategorySelect" 
+              name="category_select"
+              onchange="onPlannedCategoryChange(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer"
+            >
+              <option value="">-- Chọn danh mục chính --</option>
+              <?php foreach ($categoriesList as $cat): ?>
+                <?php if ($cat['type'] !== 'income'): ?>
+                  <option value="<?= htmlspecialchars($cat['name']) ?>"><?= htmlspecialchars($cat['name']) ?></option>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              <option value="__custom__">➕ Nhập danh mục khác...</option>
+            </select>
+
             <input 
               type="text" 
-              id="plannedCategoryInput"
-              name="category" 
-              required 
-              list="plannedCategoryList"
-              placeholder="VD: Dâu, Ăn uống, Tiền nhà..." 
-              oninput="syncPlannedSubcategories(this.value)"
-              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition"
+              id="plannedCategoryCustomInput" 
+              placeholder="Nhập tên danh mục mới..." 
+              class="hidden mt-2 w-full px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-amber-400/50 text-white placeholder-slate-500 focus:outline-none transition"
             />
-            <datalist id="plannedCategoryList">
-              <?php foreach ($categoriesList as $cat): ?>
-                <option value="<?= htmlspecialchars($cat['name']) ?>"></option>
-              <?php endforeach; ?>
-            </datalist>
           </div>
 
           <!-- Subcategory -->
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">
-              Danh mục chi tiết / con
-            </label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">
+                Danh mục chi tiết / con
+              </label>
+              <button 
+                type="button" 
+                id="togglePlannedCustomSubBtn"
+                onclick="togglePlannedCustomSub()"
+                class="text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer"
+              >
+                + Tự gõ con
+              </button>
+            </div>
+
+            <select 
+              id="plannedSubcategorySelect" 
+              name="subcategory_select"
+              onchange="onPlannedSubcategoryChange(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer"
+            >
+              <option value="">-- Chọn danh mục con (Tùy chọn) --</option>
+              <option value="__custom__">➕ Nhập danh mục con khác...</option>
+            </select>
+
             <input 
               type="text" 
-              id="plannedSubcategoryInput"
-              name="subcategory" 
-              list="plannedSubcategoryList"
-              placeholder="VD: Tiền học, Tiền sữa..." 
-              class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition"
+              id="plannedSubcategoryCustomInput" 
+              placeholder="Nhập tên danh mục con mới..." 
+              class="hidden mt-2 w-full px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-amber-400/50 text-white placeholder-slate-500 focus:outline-none transition"
             />
-            <datalist id="plannedSubcategoryList">
-              <?php foreach ($subcategoriesList as $sub): ?>
-                <option value="<?= htmlspecialchars($sub['name']) ?>"></option>
-              <?php endforeach; ?>
-            </datalist>
           </div>
         </div>
 
@@ -1862,20 +1914,46 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
             </div>
           </div>
 
+          <!-- Dynamic Option: Weekly / Custom Weeks Interval -->
+          <div id="weeklyWrapper" class="hidden flex-wrap items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Chu kỳ lặp:</span>
+            <div class="flex items-center gap-2">
+              <input 
+                type="number" 
+                id="plannedWeeklyInterval"
+                min="1" 
+                max="52" 
+                value="4" 
+                class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none"
+              />
+              <span class="text-xs text-amber-300 font-bold">tuần / lần</span>
+            </div>
+            <!-- Quick Chips for Weeks -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" onclick="setWeeklyInterval(1)" id="btnWeek1" class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">1 tuần</button>
+              <button type="button" onclick="setWeeklyInterval(2)" id="btnWeek2" class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">2 tuần</button>
+              <button type="button" onclick="setWeeklyInterval(4)" id="btnWeek4" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 transition cursor-pointer">4 tuần 1 lần ⭐</button>
+            </div>
+          </div>
+
           <!-- Dynamic Option: Custom Days Interval -->
-          <div id="customDaysWrapper" class="hidden items-center gap-3 pt-1">
+          <div id="customDaysWrapper" class="hidden flex-wrap items-center gap-3 pt-1">
             <span class="text-xs text-slate-400">Xuất hiện chu kỳ:</span>
             <div class="flex items-center gap-2">
               <input 
                 type="number" 
                 id="plannedCustomInterval"
-                name="repeat_interval" 
                 min="1" 
                 max="365" 
                 value="3" 
                 class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none"
               />
               <span class="text-xs text-amber-300 font-bold">ngày xuất hiện 1 lần</span>
+            </div>
+            <!-- Quick Chips for Days -->
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setCustomDaysInterval(3)" class="px-2 py-0.5 rounded-md text-[10px] bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">3 ngày</button>
+              <button type="button" onclick="setCustomDaysInterval(4)" class="px-2 py-0.5 rounded-md text-[10px] bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">4 ngày</button>
             </div>
           </div>
         </div>
@@ -2159,19 +2237,22 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
     // Modal Add Category Controls
     function openAddCategoryModal() {
       const catModal = document.getElementById('addCategoryModal');
-      const catInput = document.getElementById('categoryInput');
+      const catCustom = document.getElementById('categoryCustomInput');
       const modalCatName = document.getElementById('modalCatName');
 
-      // Pre-fill name if user already typed in category input
-      if (catInput && catInput.value.trim()) {
-        modalCatName.value = catInput.value.trim();
+      // Pre-fill name if user already typed in custom input
+      if (catCustom && catCustom.value.trim()) {
+        modalCatName.value = catCustom.value.trim();
       } else {
         modalCatName.value = '';
       }
 
       // Sync category type with current radio selection
       const currentTxType = document.querySelector('input[name="type"]:checked')?.value || 'expense';
-      syncCategoryType(currentTxType);
+      const radInc = document.getElementById('catTypeIncome');
+      const radExp = document.getElementById('catTypeExpense');
+      if (currentTxType === 'income' && radInc) radInc.checked = true;
+      if (currentTxType === 'expense' && radExp) radExp.checked = true;
 
       catModal.classList.remove('hidden');
       catModal.classList.add('flex');
@@ -2180,16 +2261,6 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
 
     function closeAddCategoryModal() {
       closeModal('addCategoryModal');
-    }
-
-    function syncCategoryType(type) {
-      if (type === 'income') {
-        const rad = document.getElementById('catTypeIncome');
-        if (rad) rad.checked = true;
-      } else if (type === 'expense') {
-        const rad = document.getElementById('catTypeExpense');
-        if (rad) rad.checked = true;
-      }
     }
 
     // Submit New Category from quick modal
@@ -2223,28 +2294,30 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
         if (data.success) {
           showToast('success', data.message);
           
-          // Set value into category input field
-          const catInput = document.getElementById('categoryInput');
-          if (catInput) {
-            catInput.value = name;
+          // Add to ALL_CATEGORIES array
+          ALL_CATEGORIES.push({
+            id: data.category?.id || Date.now(),
+            name: name,
+            type: type,
+            parent_id: null
+          });
+
+          // Refresh category dropdown in Add Modal
+          const currentTxType = document.querySelector('input[name="type"]:checked')?.value || 'expense';
+          syncCategoryType(currentTxType);
+          const catSelect = document.getElementById('categorySelect');
+          if (catSelect) {
+            catSelect.value = name;
+            updateTxSubcategories(name);
           }
 
-          // Add to datalist if not already in datalist
-          const datalist = document.getElementById('categoryList');
-          if (datalist) {
-            let exists = false;
-            for (let opt of datalist.options) {
-              if (opt.value.toLowerCase() === name.toLowerCase()) {
-                exists = true;
-                break;
-              }
-            }
-            if (!exists) {
-              const opt = document.createElement('option');
-              opt.value = name;
-              opt.text = type === 'income' ? ' [Thu nhập]' : (type === 'expense' ? ' [Khoản chi]' : ' [Dùng chung]');
-              datalist.appendChild(opt);
-            }
+          // Also update plannedCategorySelect if modal exists
+          const plannedCatSelect = document.getElementById('plannedCategorySelect');
+          if (plannedCatSelect && type !== 'income') {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            plannedCatSelect.insertBefore(opt, plannedCatSelect.lastElementChild);
           }
 
           closeAddCategoryModal();
@@ -2437,8 +2510,31 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
         return;
       }
 
+      const catSelect = document.getElementById('categorySelect');
+      const catCustom = document.getElementById('categoryCustomInput');
+      let finalCat = catSelect ? catSelect.value : '';
+      if (finalCat === '__custom__' || !finalCat) {
+        if (catCustom && catCustom.value.trim()) finalCat = catCustom.value.trim();
+      }
+
+      if (!finalCat) {
+        showToast('error', 'Vui lòng chọn hoặc nhập danh mục!');
+        if (catSelect) catSelect.focus();
+        return;
+      }
+
+      const subSelect = document.getElementById('subcategorySelect');
+      const subCustom = document.getElementById('subcategoryCustomInput');
+      let finalSub = subSelect ? subSelect.value : '';
+      if (finalSub === '__custom__' || !finalSub) {
+        if (subCustom && subCustom.value.trim()) finalSub = subCustom.value.trim();
+      }
+      if (finalSub === '__custom__') finalSub = '';
+
       const formData = new FormData(form);
       formData.set('amount', rawAmount);
+      formData.set('category', finalCat);
+      formData.set('subcategory', finalSub);
       const submitBtn = document.getElementById('btnAddSubmit');
 
       submitBtn.disabled = true;
@@ -2523,32 +2619,151 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
     }
 
     // =========================================================
-    // Subcategories Dynamic Mapping
+    // Dynamic Categories & Subcategories Controllers
     // =========================================================
+    const ALL_CATEGORIES = <?= json_encode($categoriesList, JSON_UNESCAPED_UNICODE) ?>;
     const SUBCATEGORIES_MAP = <?= json_encode($subcategoriesByCategoryName, JSON_UNESCAPED_UNICODE) ?>;
 
-    function syncTxSubcategories(catName) {
-      const list = document.getElementById('subcategoryList');
-      if (!list) return;
-      list.innerHTML = '';
-      const subs = SUBCATEGORIES_MAP[catName] || [];
-      subs.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s;
-        list.appendChild(opt);
-      });
+    function getSubcategoriesForCategory(catName) {
+      if (!catName || catName === '__custom__') return [];
+      if (SUBCATEGORIES_MAP[catName]) return SUBCATEGORIES_MAP[catName];
+      const lower = catName.toLowerCase().trim();
+      for (const k in SUBCATEGORIES_MAP) {
+        if (k.toLowerCase().trim() === lower) {
+          return SUBCATEGORIES_MAP[k];
+        }
+      }
+      return [];
     }
 
-    function syncPlannedSubcategories(catName) {
-      const list = document.getElementById('plannedSubcategoryList');
-      if (!list) return;
-      list.innerHTML = '';
-      const subs = SUBCATEGORIES_MAP[catName] || [];
+    // Modal Giao dịch mới (Add Transaction)
+    function syncCategoryType(type) {
+      const catSelect = document.getElementById('categorySelect');
+      if (!catSelect) return;
+
+      const currentSelected = catSelect.value;
+      catSelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+
+      ALL_CATEGORIES.forEach(cat => {
+        if (type === 'income') {
+          if (cat.type === 'income' || cat.type === 'both') {
+            const opt = document.createElement('option');
+            opt.value = cat.name;
+            opt.textContent = cat.name;
+            if (cat.name === currentSelected) opt.selected = true;
+            catSelect.appendChild(opt);
+          }
+        } else {
+          if (cat.type === 'expense' || cat.type === 'both') {
+            const opt = document.createElement('option');
+            opt.value = cat.name;
+            opt.textContent = cat.name;
+            if (cat.name === currentSelected) opt.selected = true;
+            catSelect.appendChild(opt);
+          }
+        }
+      });
+
+      const customOpt = document.createElement('option');
+      customOpt.value = '__custom__';
+      customOpt.textContent = '➕ Nhập danh mục khác...';
+      catSelect.appendChild(customOpt);
+
+      updateTxSubcategories(catSelect.value);
+    }
+
+    function onTxCategoryChange(val) {
+      const customInput = document.getElementById('categoryCustomInput');
+      const toggleBtn = document.getElementById('toggleTxCustomCatBtn');
+      if (val === '__custom__') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+        if (toggleBtn) toggleBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        if (toggleBtn) toggleBtn.textContent = '+ Tự gõ tên';
+      }
+      updateTxSubcategories(val);
+    }
+
+    function toggleTxCustomCat() {
+      const select = document.getElementById('categorySelect');
+      const customInput = document.getElementById('categoryCustomInput');
+      const toggleBtn = document.getElementById('toggleTxCustomCatBtn');
+
+      if (customInput.classList.contains('hidden')) {
+        customInput.classList.remove('hidden');
+        select.value = '__custom__';
+        toggleBtn.textContent = 'Chọn từ danh sách';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        select.value = '';
+        toggleBtn.textContent = '+ Tự gõ tên';
+        updateTxSubcategories('');
+      }
+    }
+
+    function updateTxSubcategories(catName) {
+      const subSelect = document.getElementById('subcategorySelect');
+      if (!subSelect) return;
+
+      subSelect.innerHTML = '<option value="">-- Chọn danh mục con (Tùy chọn) --</option>';
+
+      const subs = getSubcategoriesForCategory(catName);
       subs.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s;
-        list.appendChild(opt);
+        opt.textContent = s;
+        subSelect.appendChild(opt);
       });
+
+      const customOpt = document.createElement('option');
+      customOpt.value = '__custom__';
+      customOpt.textContent = '➕ Nhập danh mục con khác...';
+      subSelect.appendChild(customOpt);
+
+      const customSub = document.getElementById('subcategoryCustomInput');
+      if (customSub) {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+      }
+      const toggleSubBtn = document.getElementById('toggleTxCustomSubBtn');
+      if (toggleSubBtn) toggleSubBtn.textContent = '+ Tự gõ con';
+    }
+
+    function onTxSubcategoryChange(val) {
+      const customSub = document.getElementById('subcategoryCustomInput');
+      const toggleSubBtn = document.getElementById('toggleTxCustomSubBtn');
+      if (val === '__custom__') {
+        customSub.classList.remove('hidden');
+        customSub.focus();
+        if (toggleSubBtn) toggleSubBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+        if (toggleSubBtn) toggleSubBtn.textContent = '+ Tự gõ con';
+      }
+    }
+
+    function toggleTxCustomSub() {
+      const select = document.getElementById('subcategorySelect');
+      const customInput = document.getElementById('subcategoryCustomInput');
+      const toggleBtn = document.getElementById('toggleTxCustomSubBtn');
+
+      if (customInput.classList.contains('hidden')) {
+        customInput.classList.remove('hidden');
+        select.value = '__custom__';
+        toggleBtn.textContent = 'Chọn từ danh sách';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        select.value = '';
+        toggleBtn.textContent = '+ Tự gõ con';
+      }
     }
 
     // =========================================================
@@ -2567,23 +2782,145 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       toggleSidebar(false);
-      setTimeout(() => document.getElementById('plannedCategoryInput')?.focus(), 100);
+
+      const catSelect = document.getElementById('plannedCategorySelect');
+      if (catSelect) {
+        updatePlannedSubcategories(catSelect.value);
+      }
     }
 
     function closeAddPlannedModal() {
       closeModal('addPlannedModal');
     }
 
+    function onPlannedCategoryChange(val) {
+      const customInput = document.getElementById('plannedCategoryCustomInput');
+      const toggleBtn = document.getElementById('togglePlannedCustomCatBtn');
+      if (val === '__custom__') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+        if (toggleBtn) toggleBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        if (toggleBtn) toggleBtn.textContent = '+ Tự gõ tên';
+      }
+      updatePlannedSubcategories(val);
+    }
+
+    function togglePlannedCustomCat() {
+      const select = document.getElementById('plannedCategorySelect');
+      const customInput = document.getElementById('plannedCategoryCustomInput');
+      const toggleBtn = document.getElementById('togglePlannedCustomCatBtn');
+
+      if (customInput.classList.contains('hidden')) {
+        customInput.classList.remove('hidden');
+        select.value = '__custom__';
+        toggleBtn.textContent = 'Chọn từ danh sách';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        select.value = '';
+        toggleBtn.textContent = '+ Tự gõ tên';
+        updatePlannedSubcategories('');
+      }
+    }
+
+    function updatePlannedSubcategories(catName) {
+      const subSelect = document.getElementById('plannedSubcategorySelect');
+      if (!subSelect) return;
+
+      subSelect.innerHTML = '<option value="">-- Chọn danh mục con (Tùy chọn) --</option>';
+
+      const subs = getSubcategoriesForCategory(catName);
+      subs.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        subSelect.appendChild(opt);
+      });
+
+      const customOpt = document.createElement('option');
+      customOpt.value = '__custom__';
+      customOpt.textContent = '➕ Nhập danh mục con khác...';
+      subSelect.appendChild(customOpt);
+
+      const customSub = document.getElementById('plannedSubcategoryCustomInput');
+      if (customSub) {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+      }
+      const toggleSubBtn = document.getElementById('togglePlannedCustomSubBtn');
+      if (toggleSubBtn) toggleSubBtn.textContent = '+ Tự gõ con';
+    }
+
+    function onPlannedSubcategoryChange(val) {
+      const customSub = document.getElementById('plannedSubcategoryCustomInput');
+      const toggleSubBtn = document.getElementById('togglePlannedCustomSubBtn');
+      if (val === '__custom__') {
+        customSub.classList.remove('hidden');
+        customSub.focus();
+        if (toggleSubBtn) toggleSubBtn.textContent = 'Chọn từ danh sách';
+      } else {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+        if (toggleSubBtn) toggleSubBtn.textContent = '+ Tự gõ con';
+      }
+    }
+
+    function togglePlannedCustomSub() {
+      const select = document.getElementById('plannedSubcategorySelect');
+      const customInput = document.getElementById('plannedSubcategoryCustomInput');
+      const toggleBtn = document.getElementById('togglePlannedCustomSubBtn');
+
+      if (customInput.classList.contains('hidden')) {
+        customInput.classList.remove('hidden');
+        select.value = '__custom__';
+        toggleBtn.textContent = 'Chọn từ danh sách';
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+        select.value = '';
+        toggleBtn.textContent = '+ Tự gõ con';
+      }
+    }
+
     function toggleRepeatOptions(repeatType) {
       const monthlyWrapper = document.getElementById('monthlyDayWrapper');
+      const weeklyWrapper = document.getElementById('weeklyWrapper');
       const customWrapper = document.getElementById('customDaysWrapper');
 
       if (monthlyWrapper) {
         monthlyWrapper.style.display = (repeatType === 'monthly') ? 'flex' : 'none';
       }
+      if (weeklyWrapper) {
+        weeklyWrapper.style.display = (repeatType === 'weekly') ? 'flex' : 'none';
+      }
       if (customWrapper) {
         customWrapper.style.display = (repeatType === 'custom_days') ? 'flex' : 'none';
       }
+    }
+
+    function setWeeklyInterval(weeks) {
+      const input = document.getElementById('plannedWeeklyInterval');
+      if (input) input.value = weeks;
+
+      ['btnWeek1', 'btnWeek2', 'btnWeek4'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer';
+      });
+      const activeBtn = document.getElementById('btnWeek' + weeks);
+      if (activeBtn) {
+        activeBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 transition cursor-pointer';
+      }
+    }
+
+    function setCustomDaysInterval(days) {
+      const input = document.getElementById('plannedCustomInterval');
+      if (input) input.value = days;
     }
 
     function onPlannedDateChange(dateStr) {
@@ -2610,8 +2947,40 @@ function formatRepeatBadge($type, $interval = 1, $dayOfMonth = null) {
         return;
       }
 
+      const catSelect = document.getElementById('plannedCategorySelect');
+      const catCustom = document.getElementById('plannedCategoryCustomInput');
+      let finalCat = catSelect ? catSelect.value : '';
+      if (finalCat === '__custom__' || !finalCat) {
+        if (catCustom && catCustom.value.trim()) finalCat = catCustom.value.trim();
+      }
+
+      if (!finalCat) {
+        showToast('error', 'Vui lòng chọn hoặc nhập danh mục chính!');
+        if (catSelect) catSelect.focus();
+        return;
+      }
+
+      const subSelect = document.getElementById('plannedSubcategorySelect');
+      const subCustom = document.getElementById('plannedSubcategoryCustomInput');
+      let finalSub = subSelect ? subSelect.value : '';
+      if (finalSub === '__custom__' || !finalSub) {
+        if (subCustom && subCustom.value.trim()) finalSub = subCustom.value.trim();
+      }
+      if (finalSub === '__custom__') finalSub = '';
+
       const formData = new FormData(form);
       formData.set('expected_amount', rawAmount);
+      formData.set('category', finalCat);
+      formData.set('subcategory', finalSub);
+
+      let interval = 1;
+      const repeatType = form.querySelector('input[name="repeat_type"]:checked')?.value || 'monthly';
+      if (repeatType === 'weekly') {
+        interval = parseInt(document.getElementById('plannedWeeklyInterval')?.value || 1, 10);
+      } else if (repeatType === 'custom_days') {
+        interval = parseInt(document.getElementById('plannedCustomInterval')?.value || 1, 10);
+      }
+      formData.set('repeat_interval', Math.max(1, interval));
 
       const btn = document.getElementById('btnAddPlannedSubmit');
       btn.disabled = true;

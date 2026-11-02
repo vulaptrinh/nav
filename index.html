@@ -13,6 +13,10 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
+  <!-- Supabase JS Client & Config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  
   <script>
     tailwind.config = {
       theme: {
@@ -512,7 +516,7 @@
     }
 
     // Form Submission Handling
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
 
       const user = document.getElementById("username").value.trim();
@@ -567,20 +571,51 @@
       btnSpinner.classList.remove("hidden");
       btnArrow.classList.add("hidden");
 
-      // Simulated authentication success
-      setTimeout(() => {
+      // Format email for Supabase Auth
+      let email = user;
+      if (!email.includes("@")) {
+        email = user + "@cashtrack.local";
+      }
+
+      try {
+        if (!supabaseClient) {
+          throw new Error("Không thể kết nối máy chủ Supabase. Vui lòng kiểm tra config.js");
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: pass
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        btnText.textContent = "Đăng nhập thành công!";
+        showToast("success", `Chào mừng trở lại! Đang chuyển hướng...`);
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 800);
+      } catch (err) {
         btn.disabled = false;
         btn.classList.remove("opacity-80", "cursor-not-allowed");
         btnText.textContent = "Log In";
         btnSpinner.classList.add("hidden");
         btnArrow.classList.remove("hidden");
-
-        showToast("success", `Đăng nhập thành công! Chào mừng ${user}`);
-      }, 1200);
+        generateCaptcha();
+        
+        let msg = err.message || "Tài khoản hoặc mật khẩu không chính xác!";
+        if (msg.includes("Invalid login credentials")) {
+          msg = "Email hoặc mật khẩu không đúng!";
+        } else if (msg.includes("Email not confirmed")) {
+          msg = "Email chưa được xác nhận trên hệ thống!";
+        }
+        showToast("error", msg);
+      }
     }
 
     // On Load: initialize captcha and load remembered user
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("DOMContentLoaded", async () => {
       generateCaptcha();
       
       const savedUser = localStorage.getItem("cashtrack_saved_user");
@@ -590,6 +625,18 @@
         document.getElementById("password").focus();
       } else {
         document.getElementById("username").focus();
+      }
+
+      // Check if already authenticated
+      if (supabaseClient) {
+        try {
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          if (session) {
+            window.location.href = "dashboard.html";
+          }
+        } catch (e) {
+          console.error("Auth session check error:", e);
+        }
       }
     });
   </script>
