@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CashTrack - Quản lý tài chính cá nhân</title>
+  <title>CashTrack - Quản lý tài chính thông minh</title>
   
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,11 +12,11 @@
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- Supabase JS Client & Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-
+  
   <script>
     tailwind.config = {
       theme: {
@@ -40,22 +40,17 @@
       }
     }
   </script>
-
+  
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: #060913;
       color: #f1f5f9;
       min-height: 100vh;
       overflow-x: hidden;
-      margin: 0;
     }
 
+    /* Ambient background glows */
     .bg-mesh {
       position: fixed;
       inset: 0;
@@ -63,8 +58,8 @@
       pointer-events: none;
       background: 
         radial-gradient(circle at 10% 15%, rgba(0, 210, 255, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 90% 85%, rgba(0, 102, 255, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(13, 19, 34, 0.95) 0%, #060913 100%);
+        radial-gradient(circle at 90% 85%, rgba(0, 102, 255, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(12, 17, 30, 0.96) 0%, #060913 100%);
     }
 
     .bg-grid-lines {
@@ -72,46 +67,43 @@
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      opacity: 0.035;
+      opacity: 0.03;
       background-image: 
         linear-gradient(to right, #ffffff 1px, transparent 1px),
         linear-gradient(to bottom, #ffffff 1px, transparent 1px);
-      background-size: 38px 38px;
+      background-size: 40px 40px;
     }
 
     .card-glass {
-      background: rgba(13, 19, 34, 0.75);
+      background: rgba(13, 19, 34, 0.92);
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
       border-radius: 24px;
-      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
     }
 
     .btn-gradient {
       background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
-      box-shadow: 0 8px 24px -4px rgba(0, 114, 255, 0.45);
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 6px 20px -2px rgba(0, 114, 255, 0.45);
+      transition: all 0.25s ease;
     }
-
     .btn-gradient:hover {
-      box-shadow: 0 12px 28px -2px rgba(0, 114, 255, 0.65);
-      transform: translateY(-1.5px);
+      box-shadow: 0 8px 25px rgba(0, 114, 255, 0.65);
+      transform: translateY(-1px);
       filter: brightness(1.05);
     }
 
-    .app-input {
-      background: rgba(18, 24, 38, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      transition: all 0.2s ease;
-      color: #ffffff;
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-
-    .app-input:focus {
-      background: rgba(22, 31, 51, 0.98);
-      border-color: #00d2ff;
-      box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.16);
-      outline: none;
+    ::-webkit-scrollbar-track {
+      background: rgba(13, 19, 34, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
     }
 
     #toast {
@@ -124,15 +116,83 @@
       transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
     }
-
     #toast.show {
       transform: translateY(0);
       opacity: 1;
       pointer-events: auto;
     }
+
+    /* Sidebar Collapsed State (Desktop >= 1024px) */
+    #sidebar {
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #mainContent {
+      transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (min-width: 1024px) {
+      body.sidebar-collapsed #sidebar {
+        width: 5rem !important; /* 80px */
+      }
+      body.sidebar-collapsed #mainContent {
+        padding-left: 5rem !important;
+      }
+      body.sidebar-collapsed .sidebar-text {
+        display: none !important;
+      }
+      body.sidebar-collapsed .sidebar-section-title {
+        display: none !important;
+      }
+      body.sidebar-collapsed .sidebar-header-box {
+        justify-content: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      body.sidebar-collapsed .sidebar-nav-item {
+        justify-content: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      body.sidebar-collapsed .sidebar-nav-icon {
+        margin: 0 !important;
+      }
+      body.sidebar-collapsed .sidebar-quick-btn {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        padding: 0 !important;
+        border-radius: 1rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        justify-content: center !important;
+      }
+      body.sidebar-collapsed .sidebar-status-box {
+        padding: 0.5rem !important;
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        border-radius: 1rem !important;
+        justify-content: center !important;
+      }
+      body.sidebar-collapsed .sidebar-user-box {
+        flex-direction: column !important;
+        gap: 0.6rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      body.sidebar-collapsed #sidebarCollapseIcon {
+        transform: rotate(180deg) !important;
+      }
+    }
   </style>
 </head>
 <body class="relative">
+
+  <script>
+    if (localStorage.getItem('cashtrack_sidebar_collapsed') === '1' && window.innerWidth >= 1024) {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  </script>
 
   <div class="bg-mesh"></div>
   <div class="bg-grid-lines"></div>
@@ -143,367 +203,666 @@
     <div id="toast-message"></div>
   </div>
 
-  <!-- Backdrop for Mobile Sidebar -->
-  <div id="sidebarBackdrop" onclick="toggleSidebar(false)" class="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm hidden lg:hidden"></div>
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebarBackdrop" onclick="toggleSidebar(false)" class="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm hidden lg:hidden transition-opacity"></div>
 
-  <!-- Main Container -->
-  <div class="min-h-screen flex flex-col lg:flex-row relative z-10">
+  <!-- VERTICAL SIDEBAR MENU -->
+  <aside id="sidebar" class="fixed top-0 bottom-0 left-0 z-40 w-72 h-screen bg-[#080d1b]/95 backdrop-blur-2xl border-r border-white/[0.08] flex flex-col justify-between -translate-x-full lg:translate-x-0 shadow-2xl">
+    
+    <!-- Floating Desktop Collapse / Expand Button -->
+    <button 
+      type="button" 
+      onclick="toggleSidebarCollapse()" 
+      id="sidebarCollapseBtn" 
+      class="hidden lg:flex absolute -right-3.5 top-7 w-7 h-7 rounded-full bg-[#0d1322] hover:bg-cyan-500/20 border border-white/20 hover:border-cyan-400/50 text-slate-400 hover:text-cyan-300 items-center justify-center shadow-xl transition-all z-50 group cursor-pointer"
+      title="Thu gọn / Mở rộng menu (Ctrl + B)"
+    >
+      <svg id="sidebarCollapseIcon" class="w-3.5 h-3.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
 
-    <!-- VERTICAL SIDEBAR -->
-    <aside id="sidebar" class="fixed top-0 bottom-0 left-0 z-40 w-72 h-screen bg-[#080d1b]/95 backdrop-blur-2xl border-r border-white/[0.08] flex flex-col justify-between -translate-x-full lg:translate-x-0 shadow-2xl transition-transform duration-300">
+    <!-- Top Section -->
+    <div class="p-4 lg:p-5 flex flex-col h-full overflow-y-auto">
       
-      <div class="p-5 flex flex-col h-full overflow-y-auto">
-        <!-- Logo -->
-        <div class="flex items-center justify-between pb-6 mb-4 border-b border-white/[0.07]">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/30 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_18px_rgba(0,210,255,0.3)] shrink-0">
-              <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <circle cx="12" cy="13" r="3" stroke-width="2" />
-              </svg>
-            </div>
-            <div>
-              <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-cyan-300 bg-clip-text text-transparent">
-                CashTrack
-              </span>
-              <div class="text-[10px] text-cyan-400 font-mono tracking-wider">SUPABASE POSTGRESQL</div>
-            </div>
-          </div>
-          <!-- Close button for mobile -->
-          <button type="button" onclick="toggleSidebar(false)" class="lg:hidden w-8 h-8 rounded-xl bg-white/[0.05] text-slate-400 hover:text-white flex items-center justify-center">
-            ✕
-          </button>
-        </div>
-
-        <!-- Quick Add Button -->
-        <div class="mb-5">
-          <button 
-            type="button" 
-            onclick="openAddModal('expense')" 
-            class="btn-gradient w-full py-3 px-3.5 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg cursor-pointer"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+      <!-- Brand Logo Header -->
+      <div class="sidebar-header-box flex items-center justify-between pb-6 mb-4 border-b border-white/[0.07]">
+        <div class="flex items-center gap-3 overflow-hidden">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/30 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_18px_rgba(0,210,255,0.3)] shrink-0">
+            <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <circle cx="12" cy="13" r="3" stroke-width="2" />
             </svg>
-            <span>Thêm giao dịch mới</span>
-          </button>
+          </div>
+          <div class="sidebar-text truncate">
+            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-cyan-300 bg-clip-text text-transparent">
+              CashTrack
+            </span>
+            <div class="text-[10px] text-cyan-400 font-mono tracking-wider">FINANCE & CASHFLOW</div>
+          </div>
         </div>
 
-        <!-- Navigation Links -->
-        <div class="space-y-1.5 flex-1">
-          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-2">Menu chính</div>
-          
-          <a href="#statsSection" class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-400/25">
+        <button 
+          type="button" 
+          onclick="toggleSidebar(false)" 
+          class="lg:hidden w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center transition"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Quick Action Button -->
+      <div class="mb-5">
+        <button 
+          type="button" 
+          onclick="openAddModal()" 
+          class="sidebar-quick-btn btn-gradient w-full py-3 px-3.5 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg group transition-all cursor-pointer"
+          title="Thêm giao dịch mới"
+        >
+          <svg class="w-4 h-4 transition-transform group-hover:rotate-90 duration-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="sidebar-text whitespace-nowrap">Thêm giao dịch mới</span>
+        </button>
+      </div>
+
+      <!-- Nav Section: Menu chính -->
+      <div class="space-y-1">
+        <div class="sidebar-section-title text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-2">Menu chính</div>
+        
+        <a 
+          href="javascript:void(0)" 
+          onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+          class="sidebar-nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-400/25 shadow-[0_0_15px_rgba(0,210,255,0.1)] transition-all"
+          title="Tổng quan"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-cyan-400/20 text-cyan-300 flex items-center justify-center shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
-            <span>Tổng quan tài chính</span>
-            <span class="ml-auto w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-          </a>
+          </div>
+          <span class="sidebar-text">Tổng quan</span>
+          <span class="sidebar-text ml-auto w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        </a>
 
-          <a href="#transactionSection" class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04]">
+        <a 
+          href="#transactionSection" 
+          onclick="scrollToTransactions()"
+          class="sidebar-nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all"
+          title="Lịch sử giao dịch"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-white/[0.04] text-slate-400 flex items-center justify-center shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
-            <span>Lịch sử thu chi</span>
-            <span id="navTransCount" class="ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">0</span>
-          </a>
+          </div>
+          <span class="sidebar-text">Lịch sử giao dịch</span>
+          <span id="sidebarTransCount" class="sidebar-text ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">
+            0
+          </span>
+        </a>
 
-          <a href="#plannedExpenseSection" class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04]">
-            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a 
+          href="#plannedExpenseSection" 
+          onclick="scrollToPlannedExpenses()"
+          class="sidebar-nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all"
+          title="Khoản chi dự kiến & định kỳ"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>Chi tiêu dự kiến</span>
-            <span id="navPlannedCount" class="ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">0 chờ</span>
-          </a>
+          </div>
+          <span class="sidebar-text">Chi dự kiến</span>
+          <span id="sidebarPlannedCount" class="sidebar-text ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">
+            0 chờ
+          </span>
+        </a>
+
+        <button 
+          type="button" 
+          onclick="openCategoryManagerModal()" 
+          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer"
+          title="Danh mục thu chi"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-white/[0.04] text-purple-400 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+          <span class="sidebar-text text-left">Danh mục thu chi</span>
+          <span id="sidebarCatCount" class="sidebar-text ml-auto text-[11px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+            0
+          </span>
+        </button>
+
+        <button 
+          type="button" 
+          onclick="openAnalyticsModal()" 
+          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer"
+          title="Báo cáo & Thống kê"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-white/[0.04] text-emerald-400 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <span class="sidebar-text">Báo cáo & Thống kê</span>
+          <span class="sidebar-text ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold">Mới</span>
+        </button>
+      </div>
+
+      <!-- Nav Section: Quản trị & Hệ thống -->
+      <div class="mt-5 space-y-1">
+        <div class="sidebar-section-title text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-2">Hệ thống</div>
+
+        <button 
+          type="button" 
+          onclick="openCategoryManagerModal()" 
+          class="sidebar-nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all cursor-pointer"
+          title="Cấu hình danh mục"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-white/[0.04] text-slate-400 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          </div>
+          <span class="sidebar-text">Cấu hình danh mục</span>
+        </button>
+
+        <a 
+          href="index.html" 
+          class="sidebar-nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all"
+          title="Trang Đăng nhập"
+        >
+          <div class="sidebar-nav-icon w-7 h-7 rounded-xl bg-white/[0.04] text-slate-400 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <span class="sidebar-text">Trang Đăng nhập</span>
+        </a>
+      </div>
+
+      <!-- Quick Storage Status Badge -->
+      <div class="sidebar-status-box mt-auto pt-4">
+        <div class="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-2.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></div>
+          <div class="sidebar-text truncate">
+            <div class="text-[11px] font-bold text-slate-200">Supabase Cloud</div>
+            <div class="text-[10px] text-slate-500 font-mono">PostgreSQL v15</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom User Section -->
+    <div class="sidebar-user-box p-4 border-t border-white/[0.08] bg-[#070b16] flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <div class="relative w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 p-[1.5px] shrink-0">
+          <div id="userAvatar" class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center font-bold text-xs text-white">
+            U
+          </div>
+        </div>
+        <div class="sidebar-text truncate">
+          <div id="userFullName" class="text-xs font-bold text-white truncate">Quản trị viên Hệ thống</div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-[9px] font-semibold text-cyan-400 uppercase tracking-wider px-1.5 py-0.2 rounded-md bg-cyan-500/10 border border-cyan-400/20">admin</span>
+            <span class="text-[10px] text-slate-500">&bull;</span>
+            <span class="text-[10px] text-slate-400 font-mono">Online</span>
+          </div>
+        </div>
+      </div>
+
+      <button 
+        type="button" 
+        onclick="handleLogout()" 
+        class="sidebar-text p-2 rounded-xl bg-white/[0.04] hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+        title="Đăng xuất"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="mainContent" class="lg:pl-72 flex flex-col min-h-screen">
+    
+    <!-- Top Nav Header -->
+    <header class="sticky top-0 z-30 bg-[#060913]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      
+      <div class="flex items-center gap-3">
+        <button 
+          type="button" 
+          onclick="toggleSidebar(true)" 
+          class="lg:hidden p-2 rounded-xl bg-white/[0.04] border border-white/10 text-slate-300 hover:text-white"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">Tổng quan tài chính</h1>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-400/25">CashTrack v2.0</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Hệ thống theo dõi và phân bổ dòng tiền cá nhân & doanh nghiệp</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Category Manager Quick Button -->
+        <button 
+          type="button" 
+          onclick="openCategoryManagerModal()" 
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs text-slate-300 transition cursor-pointer"
+          title="Quản lý danh mục thu chi"
+        >
+          <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span>Danh mục</span>
+          <span id="topCatBadge" class="px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-mono font-bold">0</span>
+        </button>
+
+        <!-- Add Planned Expense Button -->
+        <button 
+          type="button" 
+          onclick="openAddPlannedModal()" 
+          class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-xs font-bold text-amber-300 hover:text-white transition cursor-pointer shadow"
+          title="Thêm khoản chi dự kiến"
+        >
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Chi dự kiến</span>
+          <span id="topPlannedBadge" class="px-1.5 py-0.2 rounded-full bg-amber-500/30 text-amber-200 text-[10px] font-mono font-bold">0</span>
+        </button>
+
+        <!-- Add Transaction Button -->
+        <button 
+          type="button" 
+          onclick="openAddModal()" 
+          class="btn-gradient px-4 py-2 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow-lg cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="hidden sm:inline">Thêm thu chi</span>
+        </button>
+
+        <!-- User Info Badge (Desktop) -->
+        <div class="hidden sm:flex items-center gap-2.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10">
+          <div id="topUserAvatar" class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white shadow">
+            U
+          </div>
+          <div class="text-left">
+            <div id="topUserFullName" class="text-xs font-bold text-white leading-tight truncate max-w-[140px]">Quản trị viên Hệ thống</div>
+          </div>
         </div>
 
-        <!-- User Info & Logout on Sidebar Bottom -->
-        <div class="pt-4 border-t border-white/[0.08] flex items-center justify-between">
-          <div class="flex items-center gap-2.5 overflow-hidden">
-            <div id="userAvatar" class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-              U
-            </div>
-            <div class="truncate">
-              <div id="userEmail" class="text-xs font-bold text-white truncate">Đang tải...</div>
-              <div class="text-[10px] text-cyan-400">Online &bull; RLS Active</div>
+        <!-- Logout Button -->
+        <button 
+          type="button" 
+          onclick="handleLogout()" 
+          class="p-2 rounded-full bg-white/[0.04] hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-300 hover:text-rose-400 transition-colors cursor-pointer" 
+          title="Đăng xuất"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 w-full flex-1">
+      
+      <!-- Welcome Banner -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            Tổng quan tài chính <span class="text-xl">📊</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Dữ liệu kết nối trực tiếp với Supabase PostgreSQL <code class="text-cyan-400 font-mono">cashtrack</code>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-slate-400 bg-white/[0.03] px-3.5 py-2 rounded-2xl border border-white/10 w-fit">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Hệ thống trực tuyến</span>
+          <span class="text-slate-600">&bull;</span>
+          <span id="currentDateBadge" class="font-mono text-slate-300">--/--/----</span>
+        </div>
+      </div>
+
+      <!-- Stat Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        
+        <!-- Card 1: Balance -->
+        <div class="card-glass p-6 relative overflow-hidden group hover:border-cyan-500/30 transition-all duration-300">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all"></div>
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-3">
+            <span>Số dư khả dụng</span>
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center text-cyan-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
           </div>
-          <button 
-            type="button" 
-            onclick="handleLogout()" 
-            class="p-2 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition"
-            title="Đăng xuất"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </button>
+          <div id="statBalance" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-mono">
+            0 <span class="text-xs font-normal text-slate-400">₫</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+            <span id="statBalanceTrend" class="text-emerald-400 font-semibold">
+              ▲ Cân bằng tốt
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 2: Total Income -->
+        <div class="card-glass p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-3">
+            <span>Tổng Thu (Income)</span>
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center text-emerald-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+              </svg>
+            </div>
+          </div>
+          <div id="statIncome" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-400 font-mono">
+            +0 <span class="text-xs font-normal text-emerald-300/80">₫</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-2">Dòng tiền ghi nhận vào tài khoản</div>
+        </div>
+
+        <!-- Card 3: Total Expense -->
+        <div class="card-glass p-6 relative overflow-hidden group hover:border-rose-500/30 transition-all duration-300">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all"></div>
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-3">
+            <span>Tổng Chi (Expense)</span>
+            <div class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-400/20 flex items-center justify-center text-rose-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+              </svg>
+            </div>
+          </div>
+          <div id="statExpense" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-rose-400 font-mono">
+            -0 <span class="text-xs font-normal text-rose-300/80">₫</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-2">Khoản chi tiêu & vận hành</div>
+        </div>
+
+        <!-- Card 4: Transaction Count -->
+        <div class="card-glass p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium mb-3">
+            <span>Tổng số giao dịch</span>
+            <div class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-400/20 flex items-center justify-center text-purple-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+          </div>
+          <div id="statTxCount" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-mono">
+            0 <span class="text-xs font-normal text-slate-400">bản ghi</span>
+          </div>
+          <div class="text-[11px] text-purple-400/90 mt-2">Đồng bộ Supabase thời gian thực</div>
         </div>
 
       </div>
-    </aside>
 
-    <!-- MAIN CONTENT AREA -->
-    <div class="flex-1 lg:pl-72 flex flex-col min-w-0">
-      
-      <!-- Top Header -->
-      <header class="sticky top-0 z-30 bg-[#060913]/85 backdrop-blur-xl border-b border-white/[0.08] px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <!-- Mobile Menu Toggle Button -->
-          <button 
-            type="button" 
-            onclick="toggleSidebar(true)" 
-            class="lg:hidden p-2 rounded-xl bg-white/[0.05] text-slate-300 hover:text-white"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          
-          <h1 class="text-lg sm:text-xl font-bold text-white">Dashboard Quản Lý Thu Chi</h1>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button 
-            type="button" 
-            onclick="openAddPlannedModal()" 
-            class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-xs font-bold text-amber-300 transition"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>+ Kế hoạch chi</span>
-          </button>
-
-          <button 
-            type="button" 
-            onclick="openAddModal('income')" 
-            class="px-3.5 py-2 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-xs font-bold text-emerald-300 transition flex items-center gap-1.5"
-          >
-            <span>+ Thu nhập</span>
-          </button>
-
-          <button 
-            type="button" 
-            onclick="openAddModal('expense')" 
-            class="btn-gradient px-4 py-2 rounded-full text-xs font-bold text-white flex items-center gap-1.5 shadow"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>+ Thêm chi phí</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Main Body -->
-      <main class="p-4 sm:p-8 space-y-8 flex-1 max-w-7xl w-full mx-auto">
+      <!-- SECTION: KHOẢN CHI DỰ KIẾN & ĐỊNH KỲ -->
+      <div id="plannedExpenseSection" class="card-glass p-6 sm:p-7 scroll-mt-24">
         
-        <!-- STATS SECTION -->
-        <section id="statsSection" class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              Dòng tiền tổng quan <span>💎</span>
-            </h2>
-            <div class="text-xs text-slate-400 flex items-center gap-2 bg-white/[0.04] px-3 py-1 rounded-full border border-white/5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>PostgreSQL Realtime</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <!-- Card 1: Balance -->
-            <div class="card-glass p-5 relative overflow-hidden group hover:border-cyan-500/40 transition">
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span>Số dư khả dụng</span>
-                <span class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">💵</span>
-              </div>
-              <div id="statBalance" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-white">0 ₫</div>
-              <div id="statBalanceLabel" class="text-[11px] text-cyan-400 mt-2 font-medium">Đang đồng bộ...</div>
-            </div>
-
-            <!-- Card 2: Income -->
-            <div class="card-glass p-5 relative overflow-hidden group hover:border-emerald-500/40 transition">
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span>Tổng Thu Nhập</span>
-                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">📈</span>
-              </div>
-              <div id="statIncome" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-emerald-400">0 ₫</div>
-              <div class="text-[11px] text-slate-400 mt-2">Dòng tiền thực thu</div>
-            </div>
-
-            <!-- Card 3: Expense -->
-            <div class="card-glass p-5 relative overflow-hidden group hover:border-rose-500/40 transition">
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span>Tổng Chi Tiêu</span>
-                <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">📉</span>
-              </div>
-              <div id="statExpense" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-rose-400">0 ₫</div>
-              <div class="text-[11px] text-slate-400 mt-2">Khoản đã thanh toán</div>
-            </div>
-
-            <!-- Card 4: Planned Stats -->
-            <div class="card-glass p-5 relative overflow-hidden group hover:border-amber-500/40 transition">
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span>Chi Tiêu Dự Kiến</span>
-                <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">📅</span>
-              </div>
-              <div id="statPlanned" class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-amber-400">0 ₫</div>
-              <div id="statPlannedSub" class="text-[11px] text-amber-300/80 mt-2">0 khoản chờ duyệt</div>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- PLANNED EXPENSES SECTION -->
-        <section id="plannedExpenseSection" class="card-glass p-5 sm:p-6 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
-            <div>
-              <h3 class="text-base font-bold text-white flex items-center gap-2">
-                Kế hoạch chi tiêu sắp tới <span class="text-amber-400">⏰</span>
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                Khoản chi dự kiến & Định kỳ 🗓️
+                <span id="plannedHeaderCountBadge" class="text-xs bg-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full font-mono font-medium border border-amber-400/20">
+                  0 khoản
+                </span>
               </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Theo dõi các khoản cần chi tiêu để cân đối nguồn tiền</p>
             </div>
+            <p class="text-xs text-slate-400 mt-0.5">Lên kế hoạch chi tiêu theo chu kỳ (Hằng ngày, Hằng tuần, Hằng tháng hoặc X ngày/lần) & theo dõi thực tế</p>
+          </div>
+
+          <!-- Actions & Filter -->
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
+              <button onclick="filterPlannedExpenses('all')" id="btnPlannedFilterAll" class="px-3 py-1 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 cursor-pointer">Tất cả</button>
+              <button onclick="filterPlannedExpenses('pending')" id="btnPlannedFilterPending" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Chờ chi (0)</button>
+              <button onclick="filterPlannedExpenses('completed')" id="btnPlannedFilterCompleted" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Đã chi (0)</button>
+            </div>
+
             <button 
               type="button" 
               onclick="openAddPlannedModal()" 
-              class="px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-xs font-semibold text-amber-300 w-fit"
+              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-lg shadow-orange-500/20 active:scale-95 cursor-pointer"
             >
-              + Thêm kế hoạch mới
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+              <span>+ Thêm dự kiến</span>
             </button>
           </div>
+        </div>
 
-          <div id="plannedList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div class="text-center py-6 text-slate-500 text-xs col-span-full">Đang tải kế hoạch chi...</div>
-          </div>
-        </section>
-
-        <!-- TRANSACTIONS SECTION -->
-        <section id="transactionSection" class="card-glass p-5 sm:p-6 space-y-4">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
-            <div>
-              <h3 class="text-base font-bold text-white flex items-center gap-2">
-                Lịch sử giao dịch thu - chi <span>📜</span>
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Dữ liệu được lưu trữ bảo mật trên Supabase PostgreSQL</p>
-            </div>
-
-            <!-- Filters & Search -->
-            <div class="flex flex-wrap items-center gap-2.5">
-              <!-- Filter Type -->
-              <div class="flex rounded-xl bg-white/[0.04] p-1 border border-white/10 text-xs font-medium">
-                <button type="button" onclick="filterTransactions('all')" id="btnFilterAll" class="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold">Tất cả</button>
-                <button type="button" onclick="filterTransactions('income')" id="btnFilterIncome" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">Thu</button>
-                <button type="button" onclick="filterTransactions('expense')" id="btnFilterExpense" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white">Chi</button>
-              </div>
-
-              <!-- Search Box -->
-              <div class="relative">
-                <input 
-                  type="text" 
-                  id="searchInput" 
-                  placeholder="Tìm giao dịch..." 
-                  oninput="handleSearch(this.value)"
-                  class="app-input py-1.5 pl-8 pr-3 rounded-xl text-xs w-44 placeholder:text-slate-500"
-                />
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+        <!-- Summary Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+          <div>
+            <div class="text-[11px] text-slate-400 mb-0.5">Tổng dự kiến</div>
+            <div id="stripPlannedExpected" class="text-base sm:text-lg font-extrabold text-amber-400 font-mono">
+              0 <span class="text-[10px] font-normal text-slate-400">₫</span>
             </div>
           </div>
-
-          <!-- Transaction Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead>
-                <tr class="text-slate-400 border-b border-white/[0.06] pb-2">
-                  <th class="py-3 px-3">Ngày</th>
-                  <th class="py-3 px-3">Loại</th>
-                  <th class="py-3 px-3">Danh mục</th>
-                  <th class="py-3 px-3">Ghi chú</th>
-                  <th class="py-3 px-3 text-right">Số tiền</th>
-                  <th class="py-3 px-3 text-center">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody id="transactionTableBody" class="divide-y divide-white/[0.04]">
-                <tr>
-                  <td colspan="6" class="py-8 text-center text-slate-500">Đang tải dữ liệu từ Supabase...</td>
-                </tr>
-              </tbody>
-            </table>
+          <div>
+            <div class="text-[11px] text-slate-400 mb-0.5">Đã thực chi</div>
+            <div id="stripPlannedActual" class="text-base sm:text-lg font-extrabold text-emerald-400 font-mono">
+              0 <span class="text-[10px] font-normal text-slate-400">₫</span>
+            </div>
           </div>
-        </section>
+          <div>
+            <div class="text-[11px] text-slate-400 mb-0.5">Còn chờ chi</div>
+            <div id="stripPlannedRemaining" class="text-base sm:text-lg font-extrabold text-cyan-300 font-mono">
+              0 <span class="text-[10px] font-normal text-slate-400">₫</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-400 mb-0.5">Chênh lệch chi phí</div>
+            <div id="stripPlannedDiff" class="text-base sm:text-lg font-extrabold font-mono text-slate-300">
+              0 <span class="text-[10px] font-normal text-slate-400">₫</span>
+            </div>
+          </div>
+        </div>
 
-      </main>
-    </div>
-  </div>
+        <!-- Table Container -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-white/[0.08] text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="pb-3.5 pl-3">Trạng thái</th>
+                <th class="pb-3.5">Danh mục</th>
+                <th class="pb-3.5">Nội dung</th>
+                <th class="pb-3.5">Chu kỳ</th>
+                <th class="pb-3.5">Ngày dự kiến</th>
+                <th class="pb-3.5 text-right">Số tiền dự kiến</th>
+                <th class="pb-3.5 text-right">Thực tế chi</th>
+                <th class="pb-3.5 pr-3 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="plannedTableBody" class="divide-y divide-white/[0.04]">
+              <tr>
+                <td colspan="8" class="py-12 text-center text-slate-500">
+                  Đang tải danh sách kế hoạch chi từ Supabase...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-  <!-- MODAL: ADD TRANSACTION -->
-  <div id="addModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-    <div class="card-glass w-full max-w-md p-6 relative border border-cyan-500/20 shadow-2xl animate-in fade-in zoom-in duration-200">
-      <div class="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <span id="modalAddTitle">Thêm giao dịch mới</span>
-        </h3>
-        <button type="button" onclick="closeModal('addModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
       </div>
 
-      <form id="addTransForm" onsubmit="submitTransaction(event)" class="space-y-4">
-        <!-- Type Selection -->
+      <!-- SECTION: DANH SÁCH GIAO DỊCH GẦN NHẤT -->
+      <div id="transactionSection" class="card-glass p-6 sm:p-7 scroll-mt-24">
+        
+        <!-- Header & Controls -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              Danh sách giao dịch gần nhất 📋
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Nhấp vào bất kỳ dòng nào để xem chi tiết giao dịch đầu tiên!</p>
+          </div>
+
+          <!-- Filter & Search Controls -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
+              <button onclick="filterTransactions('all')" id="btnTxFilterAll" class="px-3 py-1 rounded-xl text-xs font-semibold bg-cyan-500/20 text-cyan-300 cursor-pointer">Tất cả</button>
+              <button onclick="filterTransactions('income')" id="btnTxFilterIncome" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Khoản Thu</button>
+              <button onclick="filterTransactions('expense')" id="btnTxFilterExpense" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Khoản Chi</button>
+            </div>
+
+            <!-- Search box -->
+            <div class="relative">
+              <input 
+                type="text" 
+                id="searchTxInput" 
+                oninput="handleSearchTransactions(this.value)" 
+                placeholder="Tìm danh mục, ghi chú..." 
+                class="w-48 sm:w-60 pl-8 pr-3 py-1.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none transition"
+              />
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-white/[0.08] text-slate-400 uppercase tracking-wider font-semibold">
+                <th class="pb-3.5 pl-3">Loại</th>
+                <th class="pb-3.5">Danh mục</th>
+                <th class="pb-3.5">Ghi chú</th>
+                <th class="pb-3.5">Ngày</th>
+                <th class="pb-3.5 text-right">Số tiền (VND)</th>
+                <th class="pb-3.5 pr-3 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="transactionTableBody" class="divide-y divide-white/[0.04]">
+              <tr>
+                <td colspan="6" class="py-12 text-center text-slate-500">
+                  Đang tải danh sách giao dịch từ Supabase...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/[0.05] py-5 px-6 text-center text-xs text-slate-500">
+      CashTrack &bull; Quản trị dòng tiền thông minh &bull; Supabase PostgreSQL
+    </footer>
+
+  </div>
+
+  <!-- MODAL 1: ADD TRANSACTION -->
+  <div id="addModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-md p-6 sm:p-7 relative border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeAddModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <h3 class="text-lg font-bold text-white mb-1">Thêm giao dịch mới</h3>
+      <p class="text-xs text-slate-400 mb-5">Lưu thông tin thu nhập hoặc chi phí vào hệ thống</p>
+
+      <form id="addTransactionForm" onsubmit="submitTransaction(event)" class="space-y-4">
+        <!-- Transaction Type Toggle -->
+        <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-white/[0.04] border border-white/10">
+          <label class="cursor-pointer">
+            <input type="radio" name="type" value="income" class="hidden peer" onchange="syncCategoryType(this.value)">
+            <div class="text-center py-2.5 rounded-xl text-xs font-bold text-slate-400 peer-checked:bg-emerald-500/20 peer-checked:text-emerald-400 peer-checked:border peer-checked:border-emerald-500/30 transition">
+              + Thu nhập
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="type" value="expense" checked class="hidden peer" onchange="syncCategoryType(this.value)">
+            <div class="text-center py-2.5 rounded-xl text-xs font-bold text-slate-400 peer-checked:bg-rose-500/20 peer-checked:text-rose-400 peer-checked:border peer-checked:border-rose-500/30 transition">
+              - Khoản chi
+            </div>
+          </label>
+        </div>
+
+        <!-- Category Select -->
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Loại giao dịch</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-white/10 cursor-pointer bg-white/[0.03] has-[:checked]:bg-emerald-500/20 has-[:checked]:border-emerald-500/50 has-[:checked]:text-emerald-300">
-              <input type="radio" name="transType" value="income" class="hidden" onchange="updateCategorySelect('income')">
-              <span class="text-xs font-bold">+ Thu nhập</span>
-            </label>
-            <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-white/10 cursor-pointer bg-white/[0.03] has-[:checked]:bg-rose-500/20 has-[:checked]:border-rose-500/50 has-[:checked]:text-rose-300">
-              <input type="radio" name="transType" value="expense" checked class="hidden" onchange="updateCategorySelect('expense')">
-              <span class="text-xs font-bold">- Chi tiêu</span>
-            </label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-300">Danh mục <span class="text-rose-400">*</span></label>
+            <button type="button" id="toggleTxCustomCatBtn" onclick="toggleTxCustomCat()" class="text-[11px] text-cyan-400 hover:text-cyan-300 transition cursor-pointer">+ Tự gõ tên</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <select id="categorySelect" required onchange="onTxCategoryChange(this.value)" class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-cyan-400 focus:outline-none transition cursor-pointer">
+                <option value="">-- Chọn danh mục --</option>
+              </select>
+              <input type="text" id="categoryCustomInput" placeholder="Nhập tên danh mục mới..." class="hidden mt-2 w-full px-4 py-2 rounded-xl text-xs bg-slate-900 border border-cyan-400/50 text-white placeholder-slate-500 focus:outline-none" />
+            </div>
+            <button type="button" onclick="openAddCategoryModal()" class="px-3.5 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition shrink-0 shadow-sm active:scale-95 cursor-pointer self-start">
+              <span>Thêm</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Subcategory -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-300">Danh mục chi tiết / con (Tùy chọn)</label>
+            <button type="button" id="toggleTxCustomSubBtn" onclick="toggleTxCustomSub()" class="text-[11px] text-cyan-400 hover:text-cyan-300 transition cursor-pointer">+ Tự gõ con</button>
+          </div>
+          <div>
+            <select id="subcategorySelect" onchange="onTxSubcategoryChange(this.value)" class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-cyan-400 focus:outline-none transition cursor-pointer">
+              <option value="">-- Chọn danh mục con (Tùy chọn) --</option>
+            </select>
+            <input type="text" id="subcategoryCustomInput" placeholder="Nhập tên danh mục con mới..." class="hidden mt-2 w-full px-4 py-2 rounded-xl text-xs bg-slate-900 border border-cyan-400/50 text-white placeholder-slate-500 focus:outline-none" />
           </div>
         </div>
 
         <!-- Amount -->
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Số tiền (VNĐ)</label>
-          <input 
-            type="number" 
-            id="transAmount" 
-            required 
-            min="1000" 
-            step="1000" 
-            placeholder="Ví dụ: 150000" 
-            class="app-input w-full px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold"
-          />
-        </div>
-
-        <!-- Category -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Danh mục</label>
-          <select id="transCategory" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs">
-            <option value="">Chọn danh mục...</option>
-          </select>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Số tiền (VND)</label>
+          <div class="relative">
+            <input type="text" inputmode="numeric" id="amountInput" required placeholder="VD: 1,200,000" class="w-full px-4 py-2.5 pr-10 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white font-mono font-bold focus:border-cyan-400 focus:outline-none transition" />
+            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none select-none">₫</span>
+          </div>
         </div>
 
         <!-- Date -->
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ngày thực hiện</label>
-          <input type="date" id="transDate" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ngày giao dịch</label>
+          <input type="date" id="txDateInput" required class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-cyan-400 focus:outline-none transition" />
         </div>
 
         <!-- Note -->
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ghi chú (Tùy chọn)</label>
-          <input type="text" id="transNote" placeholder="Ví dụ: Tiền ăn trưa đối tác..." class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ghi chú (Tùy chọn)</label>
+          <input type="text" id="txNoteInput" placeholder="Nội dung chi tiết..." class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-cyan-400 focus:outline-none transition" />
         </div>
 
         <!-- Submit Button -->
-        <div class="pt-2">
-          <button type="submit" id="btnSubmitTrans" class="btn-gradient w-full py-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2">
+        <div class="pt-3">
+          <button type="submit" id="btnAddSubmit" class="btn-gradient w-full py-3 rounded-full text-white font-bold text-xs tracking-wide flex items-center justify-center gap-2 cursor-pointer">
             <span>Lưu giao dịch</span>
           </button>
         </div>
@@ -511,516 +870,1602 @@
     </div>
   </div>
 
-  <!-- MODAL: ADD PLANNED EXPENSE -->
-  <div id="addPlannedModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-    <div class="card-glass w-full max-w-md p-6 relative border border-amber-500/20 shadow-2xl animate-in fade-in zoom-in duration-200">
-      <div class="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <span class="text-amber-400">📅</span> Thêm kế hoạch chi tiêu
-        </h3>
-        <button type="button" onclick="closeModal('addPlannedModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+  <!-- MODAL 2: THÊM DANH MỤC MỚI -->
+  <div id="addCategoryModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-sm p-6 relative border border-cyan-500/30 shadow-[0_0_50px_rgba(0,210,255,0.15)] animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeAddCategoryModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-2.5 mb-2">
+        <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Thêm danh mục mới</h3>
+          <p class="text-[11px] text-slate-400">Tạo danh mục mới để phân loại thu chi</p>
+        </div>
       </div>
 
-      <form id="addPlannedForm" onsubmit="submitPlannedExpense(event)" class="space-y-4">
+      <form id="addCategoryForm" onsubmit="submitNewCategory(event)" class="space-y-4 mt-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Tên khoản chi</label>
-          <input type="text" id="plannedTitle" required placeholder="Ví dụ: Tiền đóng học phí, Tiền thuê nhà..." class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên danh mục <span class="text-rose-400">*</span></label>
+          <input type="text" id="modalCatName" required placeholder="VD: Học tập, Thể thao, Du lịch..." class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none transition" />
         </div>
-
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Số tiền dự kiến (VNĐ)</label>
-          <input type="number" id="plannedAmount" required min="1000" step="1000" placeholder="Ví dụ: 3000000" class="app-input w-full px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Loại danh mục</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="cat_type" value="income" class="hidden peer" id="catTypeIncome">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-emerald-500/20 peer-checked:text-emerald-400 peer-checked:border-emerald-500/30 transition">
+                + Thu nhập
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="cat_type" value="expense" checked class="hidden peer" id="catTypeExpense">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-rose-500/20 peer-checked:text-rose-400 peer-checked:border-rose-500/30 transition">
+                - Khoản chi
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="cat_type" value="both" class="hidden peer" id="catTypeBoth">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-cyan-500/20 peer-checked:text-cyan-300 peer-checked:border-cyan-500/30 transition">
+                ⇄ Dùng chung
+              </div>
+            </label>
+          </div>
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Danh mục</label>
-          <select id="plannedCategory" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs">
-            <option value="">Chọn danh mục...</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ngày dự kiến thanh toán</label>
-          <input type="date" id="plannedDate" required class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ghi chú</label>
-          <input type="text" id="plannedNote" placeholder="Ghi chú chi tiết nếu có..." class="app-input w-full px-3.5 py-2.5 rounded-xl text-xs" />
-        </div>
-
-        <div class="pt-2">
-          <button type="submit" id="btnSubmitPlanned" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition">
-            <span>Tạo kế hoạch chi</span>
+        <div class="flex items-center gap-2 pt-2">
+          <button type="button" onclick="closeAddCategoryModal()" class="w-1/3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-semibold text-slate-300 transition cursor-pointer">Hủy</button>
+          <button type="submit" id="btnSaveCategory" class="btn-gradient w-2/3 py-2.5 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>Lưu danh mục</span>
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <!-- MODAL 3: QUẢN LÝ DANH MỤC -->
+  <div id="categoryManagerModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-2xl max-h-[85vh] p-6 sm:p-7 relative border border-white/10 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeCategoryManagerModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Quản lý danh mục thu chi</h3>
+          <p class="text-xs text-slate-400">Xem và phân loại các danh mục của bạn trong cơ sở dữ liệu</p>
+        </div>
+      </div>
+
+      <form onsubmit="submitCategoryFromManager(event)" class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 mb-5 flex flex-col gap-2">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <input type="text" id="mgrCatName" required placeholder="Nhập tên danh mục mới..." class="flex-1 px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none" />
+          <select id="mgrCatType" class="px-3 py-2 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-cyan-400 focus:outline-none">
+            <option value="expense">Khoản chi (-)</option>
+            <option value="income">Thu nhập (+)</option>
+            <option value="both">Dùng chung (⇄)</option>
+          </select>
+          <select id="mgrParentId" class="px-3 py-2 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-cyan-400 focus:outline-none">
+            <option value="">-- Là danh mục chính --</option>
+          </select>
+          <button type="submit" class="btn-gradient px-4 py-2 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 shrink-0 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            <span>Thêm</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="flex items-center gap-2 mb-3">
+        <button type="button" onclick="filterCategoryCards('all')" id="btnMgrCatAll" class="px-3 py-1 rounded-xl text-xs font-semibold bg-purple-500/20 text-purple-300 cursor-pointer">Tất cả</button>
+        <button type="button" onclick="filterCategoryCards('income')" id="btnMgrCatIncome" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Thu nhập</button>
+        <button type="button" onclick="filterCategoryCards('expense')" id="btnMgrCatExpense" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer">Khoản chi</button>
+      </div>
+
+      <div id="categoryCardsContainer" class="flex-1 overflow-y-auto pr-1 space-y-2.5 max-h-[380px]">
+        <div class="text-center py-8 text-slate-500 text-xs">Đang tải danh mục...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: BÁO CÁO & THỐNG KÊ -->
+  <div id="analyticsModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-lg p-6 sm:p-7 relative border border-white/10 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeAnalyticsModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Thống kê tài chính & Danh mục</h3>
+          <p class="text-xs text-slate-400">Phân tích tỷ trọng chi tiêu và nguồn thu</p>
+        </div>
+      </div>
+
+      <div class="mb-5 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+        <div class="flex justify-between text-xs font-semibold mb-2">
+          <span id="analyticsIncomeRatio" class="text-emerald-400">Thu: 0%</span>
+          <span id="analyticsExpenseRatio" class="text-rose-400">Chi: 0%</span>
+        </div>
+        <div class="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex">
+          <div id="analyticsIncomeBar" class="h-full bg-emerald-500" style="width: 50%"></div>
+          <div id="analyticsExpenseBar" class="h-full bg-rose-500" style="width: 50%"></div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="text-xs font-bold text-slate-300">Top danh mục chi tiêu:</div>
+        <div id="analyticsTopExpenseList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <div class="text-xs text-slate-500 italic">Đang tính toán...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: XEM CHI TIẾT GIAO DỊCH -->
+  <div id="viewTransactionModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-md p-6 sm:p-7 relative border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeViewTransactionModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div id="viewTxIconBox" class="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Chi tiết giao dịch</h3>
+          <p class="text-xs text-slate-400 flex items-center gap-1.5">
+            <span>Mã giao dịch:</span>
+            <span id="viewTxId" class="font-mono text-cyan-400 font-semibold">#1</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] mb-5 text-center relative overflow-hidden">
+        <div class="flex justify-center mb-2">
+          <div id="viewTxTypeBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold">
+            Thu nhập
+          </div>
+        </div>
+        <div id="viewTxAmount" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400">
+          0 ₫
+        </div>
+      </div>
+
+      <div class="space-y-2.5 text-xs mb-6">
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+          <span class="text-slate-400">Danh mục</span>
+          <span id="viewTxCategory" class="font-bold text-white">-</span>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+          <span class="text-slate-400">Ngày giao dịch</span>
+          <span id="viewTxDate" class="font-mono font-semibold text-slate-200">-</span>
+        </div>
+        <div class="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+          <div class="text-slate-400 mb-1">Ghi chú</div>
+          <div id="viewTxNote" class="text-slate-200 font-medium whitespace-pre-wrap leading-relaxed">-</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="button" onclick="closeViewTransactionModal()" class="flex-1 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">
+          Đóng (Esc)
+        </button>
+        <button type="button" id="btnDeleteFromView" class="px-4 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 hover:text-rose-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          <span>Xóa</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: THÊM KHOẢN CHI DỰ KIẾN -->
+  <div id="addPlannedModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-lg p-6 sm:p-7 relative border border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeAddPlannedModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Thêm khoản chi dự kiến</h3>
+          <p class="text-xs text-slate-400">Lên kế hoạch chi tiêu định kỳ và theo dõi chênh lệch thực tế</p>
+        </div>
+      </div>
+
+      <form id="addPlannedForm" onsubmit="submitPlannedExpense(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">Danh mục chính <span class="text-rose-400">*</span></label>
+              <button type="button" id="togglePlannedCustomCatBtn" onclick="togglePlannedCustomCat()" class="text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer">+ Tự gõ tên</button>
+            </div>
+            <select id="plannedCategorySelect" required onchange="onPlannedCategoryChange(this.value)" class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer">
+              <option value="">-- Chọn danh mục chính --</option>
+            </select>
+            <input type="text" id="plannedCategoryCustomInput" placeholder="Nhập tên danh mục mới..." class="hidden mt-2 w-full px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-amber-400/50 text-white placeholder-slate-500 focus:outline-none transition" />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">Danh mục chi tiết / con</label>
+              <button type="button" id="togglePlannedCustomSubBtn" onclick="togglePlannedCustomSub()" class="text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer">+ Tự gõ con</button>
+            </div>
+            <select id="plannedSubcategorySelect" onchange="onPlannedSubcategoryChange(this.value)" class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer">
+              <option value="">-- Chọn danh mục con (Tùy chọn) --</option>
+            </select>
+            <input type="text" id="plannedSubcategoryCustomInput" placeholder="Nhập tên danh mục con mới..." class="hidden mt-2 w-full px-3.5 py-2 rounded-xl text-xs bg-slate-900 border border-amber-400/50 text-white placeholder-slate-500 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên khoản chi / Nội dung</label>
+          <input type="text" id="plannedTitleInput" placeholder="VD: Tiền học cho Dâu, Tiền điện nước..." class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Số tiền dự kiến (VND) <span class="text-rose-400">*</span></label>
+            <div class="relative">
+              <input type="text" inputmode="numeric" id="plannedAmountInput" required placeholder="VD: 1,000,000" class="w-full px-3.5 py-2.5 pr-8 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white font-mono font-bold focus:border-amber-400 focus:outline-none transition" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none select-none">₫</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Ngày dự kiến bắt đầu <span class="text-rose-400">*</span></label>
+            <input type="date" id="plannedExpectedDate" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <!-- Repeat Frequency Control -->
+        <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+          <label class="block text-xs font-semibold text-amber-300">Chu kỳ lặp lại (Tùy chỉnh xuất hiện)</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="repeat_type" value="monthly" checked onchange="toggleRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">🗓️ Hằng tháng</div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="repeat_type" value="weekly" onchange="toggleRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">📅 Hằng tuần</div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="repeat_type" value="daily" onchange="toggleRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">☀️ Hằng ngày</div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="repeat_type" value="custom_days" onchange="toggleRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">⏱️ X ngày / lần</div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="repeat_type" value="yearly" onchange="toggleRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">🎉 Hằng năm</div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="repeat_type" value="once" onchange="toggleRepeatOptions(this.value)" class="hidden peer">
+              <div class="text-center py-2 px-1 rounded-xl text-[11px] font-bold text-slate-400 border border-white/10 peer-checked:bg-amber-500/20 peer-checked:text-amber-300 peer-checked:border-amber-500/30 transition">1️⃣ Một lần duy nhất</div>
+            </label>
+          </div>
+
+          <!-- Dynamic Option: Monthly Day of Month -->
+          <div id="monthlyDayWrapper" class="flex items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Xuất hiện vào ngày:</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-amber-300 font-bold">Ngày</span>
+              <input type="number" id="plannedDayOfMonth" min="1" max="31" value="7" class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none" />
+              <span class="text-xs text-slate-400">hằng tháng để xem</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Option: Weekly -->
+          <div id="weeklyWrapper" class="hidden flex-wrap items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Chu kỳ lặp:</span>
+            <div class="flex items-center gap-2">
+              <input type="number" id="plannedWeeklyInterval" min="1" max="52" value="4" class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none" />
+              <span class="text-xs text-amber-300 font-bold">tuần / lần</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" onclick="setWeeklyInterval(1)" id="btnWeek1" class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">1 tuần</button>
+              <button type="button" onclick="setWeeklyInterval(2)" id="btnWeek2" class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer">2 tuần</button>
+              <button type="button" onclick="setWeeklyInterval(4)" id="btnWeek4" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 transition cursor-pointer">4 tuần 1 lần ⭐</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Option: Custom Days -->
+          <div id="customDaysWrapper" class="hidden flex-wrap items-center gap-3 pt-1">
+            <span class="text-xs text-slate-400">Xuất hiện chu kỳ:</span>
+            <div class="flex items-center gap-2">
+              <input type="number" id="plannedCustomInterval" min="1" max="365" value="3" class="w-16 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-900 border border-white/10 text-white text-center focus:border-amber-400 focus:outline-none" />
+              <span class="text-xs text-amber-300 font-bold">ngày xuất hiện 1 lần</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ghi chú thêm</label>
+          <input type="text" id="plannedNoteInput" placeholder="Ghi chú chi tiết cho khoản chi này..." class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition" />
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnAddPlannedSubmit" class="w-full py-3 rounded-full text-white font-bold text-xs tracking-wide bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            <span>Lưu khoản chi dự kiến</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 7: CẬP NHẬT THỰC TẾ CHI -->
+  <div id="actualExpenseModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-md p-6 sm:p-7 relative border border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.15)] animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeActualExpenseModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Xác nhận thực chi</h3>
+          <p class="text-xs text-slate-400">Cập nhật số tiền & ngày chi thực tế của khoản chi</p>
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] mb-4 space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400">Danh mục:</span>
+          <span id="actualModalCatBadge" class="font-bold text-white"></span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400">Ngày dự kiến:</span>
+          <span id="actualModalExpectedDate" class="font-mono text-slate-300"></span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400">Số tiền dự kiến:</span>
+          <span id="actualModalExpectedAmount" class="font-mono font-bold text-amber-400"></span>
+        </div>
+      </div>
+
+      <form id="actualExpenseForm" onsubmit="submitActualExpense(event)" class="space-y-4">
+        <input type="hidden" id="actualModalPlannedId" value="" />
+        <input type="hidden" id="actualModalBaseExpected" value="0" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ngày thực tế <span class="text-rose-400">*</span></label>
+          <input type="date" id="actualDateInput" required class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-emerald-400 focus:outline-none transition" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-300">Số tiền thực tế (VND) <span class="text-rose-400">*</span></label>
+            <span id="actualVarianceBadge" class="text-[11px] font-mono font-bold"></span>
+          </div>
+          <div class="relative">
+            <input type="text" inputmode="numeric" id="actualAmountInput" required placeholder="VD: 1,200,000" oninput="calculateActualVariance()" class="w-full px-4 py-2.5 pr-10 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white font-mono font-bold focus:border-emerald-400 focus:outline-none transition" />
+            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none select-none">₫</span>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+          <label class="flex items-start gap-2.5 cursor-pointer">
+            <input type="checkbox" id="actualRecordToTx" checked class="mt-0.5 rounded text-cyan-500 focus:ring-0 bg-slate-900 border-white/20" />
+            <div>
+              <div class="text-xs font-semibold text-white">Tự động ghi vào Lịch sử giao dịch chính</div>
+              <div class="text-[11px] text-slate-400">Trừ trực tiếp số tiền thực chi này vào số dư CashTrack của bạn</div>
+            </div>
+          </label>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ghi chú thực chi (Tùy chọn)</label>
+          <input type="text" id="actualNoteInput" placeholder="Nội dung thực tế..." class="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-emerald-400 focus:outline-none transition" />
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnSaveActualSubmit" class="w-full py-3 rounded-full text-white font-bold text-xs tracking-wide bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span>Xác nhận đã chi & Lưu</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 8: SỬA KHOẢN CHI DỰ KIẾN -->
+  <div id="editPlannedModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="card-glass w-full max-w-lg p-6 sm:p-7 relative border border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] animate-in fade-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeEditPlannedModal()" class="absolute right-5 top-5 w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">✕</button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Sửa khoản chi dự kiến</h3>
+          <p class="text-xs text-slate-400">Chỉnh sửa thông tin, chu kỳ hoặc số tiền dự kiến</p>
+        </div>
+      </div>
+
+      <form id="editPlannedForm" onsubmit="submitEditPlannedExpense(event)" class="space-y-4">
+        <input type="hidden" id="editPlannedId" value="" />
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">Danh mục chính <span class="text-rose-400">*</span></label>
+            </div>
+            <select id="editPlannedCategorySelect" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition cursor-pointer">
+              <option value="">-- Chọn danh mục chính --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Danh mục chi tiết / con</label>
+            <input type="text" id="editPlannedSubcategoryInput" placeholder="VD: Tiền học..." class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 border border-white/10 text-white placeholder-slate-500 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tên khoản chi / Nội dung</label>
+          <input type="text" id="editPlannedTitle" required placeholder="VD: Tiền học cho Dâu..." class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Số tiền dự kiến (VND) <span class="text-rose-400">*</span></label>
+            <div class="relative">
+              <input type="text" inputmode="numeric" id="editPlannedAmountInput" required placeholder="VD: 1,000,000" class="w-full px-3.5 py-2.5 pr-8 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white font-mono font-bold focus:border-amber-400 focus:outline-none transition" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none select-none">₫</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Ngày dự kiến bắt đầu <span class="text-rose-400">*</span></label>
+            <input type="date" id="editPlannedExpectedDate" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white focus:border-amber-400 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Ghi chú thêm</label>
+          <input type="text" id="editPlannedNote" placeholder="Ghi chú chi tiết..." class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition" />
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnEditPlannedSubmit" class="w-full py-3 rounded-full text-white font-bold text-xs tracking-wide bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span>Cập nhật khoản chi dự kiến</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT CONTROLLERS -->
   <script>
     let currentUser = null;
     let allTransactions = [];
     let allPlanned = [];
     let allCategories = [];
-    let currentFilter = 'all';
+    let currentViewingTxId = null;
+    let currentTxFilter = 'all';
+    let currentPlannedFilter = 'all';
 
-    // Toast helper
+    // Format numbers with commas
+    function formatNumber(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      return new Intl.NumberFormat('vi-VN').format(Math.round(num));
+    }
+
+    function unformatNumber(str) {
+      if (typeof str === 'number') return str;
+      if (!str) return 0;
+      return parseFloat(str.replace(/[^\d.-]/g, '')) || 0;
+    }
+
+    function setupCommaInput(inputId) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      el.addEventListener('input', function(e) {
+        let val = this.value.replace(/[^\d]/g, '');
+        if (val) {
+          this.value = parseInt(val, 10).toLocaleString('vi-VN');
+        } else {
+          this.value = '';
+        }
+      });
+    }
+
+    // Toast notification
     let toastTimeout;
-    function showToast(type, msg) {
+    function showToast(type, message) {
       const toast = document.getElementById("toast");
       const icon = document.getElementById("toast-icon");
-      const message = document.getElementById("toast-message");
+      const msg = document.getElementById("toast-message");
       clearTimeout(toastTimeout);
 
       if (type === "success") {
-        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-emerald-950/85 border-emerald-500/30 text-emerald-300 show";
-        icon.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-emerald-950/90 border-emerald-500/30 text-emerald-300 show";
+        icon.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+      } else if (type === "error") {
+        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-rose-950/90 border-rose-500/30 text-rose-300 show";
+        icon.innerHTML = `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>`;
       } else {
-        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-rose-950/85 border-rose-500/30 text-rose-300 show";
-        icon.innerHTML = `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+        toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-semibold bg-slate-900/90 border-cyan-500/30 text-cyan-300 show";
+        icon.innerHTML = `<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
       }
-      message.textContent = msg;
+      msg.textContent = message;
       toastTimeout = setTimeout(() => toast.classList.remove("show"), 3500);
     }
 
-    function toggleSidebar(open) {
-      const sidebar = document.getElementById("sidebar");
-      const backdrop = document.getElementById("sidebarBackdrop");
-      if (open) {
-        sidebar.classList.remove("-translate-x-full");
-        backdrop.classList.remove("hidden");
-      } else {
-        sidebar.classList.add("-translate-x-full");
-        backdrop.classList.add("hidden");
-      }
-    }
-
+    // Modal helpers
     function openModal(id) {
-      document.getElementById(id).classList.remove("hidden");
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.add("hidden");
-    }
-
-    function openAddModal(type = 'expense') {
-      const radios = document.getElementsByName("transType");
-      for (let r of radios) {
-        r.checked = (r.value === type);
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
       }
-      document.getElementById("transDate").value = new Date().toISOString().slice(0, 10);
-      updateCategorySelect(type);
-      openModal("addModal");
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
     }
 
-    function openAddPlannedModal() {
-      document.getElementById("plannedDate").value = new Date().toISOString().slice(0, 10);
-      populatePlannedCategories();
-      openModal("addPlannedModal");
+    document.querySelectorAll('.modal-backdrop').forEach(modalEl => {
+      modalEl.addEventListener('click', function(e) {
+        if (e.target === this) closeModal(this.id);
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach(m => closeModal(m.id));
+      }
+    });
+
+    // Sidebar
+    function toggleSidebar(open) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (open) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+    function toggleSidebarCollapse() {
+      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('cashtrack_sidebar_collapsed', isCollapsed ? '1' : '0');
+    }
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebarCollapse();
+      }
+    });
+
+    function scrollToTransactions() {
+      const el = document.getElementById('transactionSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      toggleSidebar(false);
+    }
+    function scrollToPlannedExpenses() {
+      const el = document.getElementById('plannedExpenseSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      toggleSidebar(false);
     }
 
-    function formatVND(amount) {
-      return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
+    // Format repeat badge
+    function formatRepeatBadge(type, interval, dayOfMonth) {
+      switch (type) {
+        case 'monthly':
+          return 'Hằng tháng' + (dayOfMonth ? ` (ngày ${String(dayOfMonth).padStart(2, '0')})` : '');
+        case 'weekly':
+          return (interval && interval > 1) ? `${interval} tuần / lần` : 'Hằng tuần';
+        case 'daily':
+          return (interval && interval > 1) ? `${interval} ngày / lần` : 'Hằng ngày';
+        case 'yearly':
+          return 'Hằng năm';
+        case 'custom_days':
+          return `${interval || 1} ngày / lần`;
+        case 'once':
+        default:
+          return 'Một lần';
+      }
     }
 
+    // Format dates
     function formatDate(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
-      return d.toLocaleDateString('vi-VN');
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     }
 
-    // Category Population
-    function updateCategorySelect(type) {
-      const select = document.getElementById("transCategory");
-      select.innerHTML = '<option value="">Chọn danh mục...</option>';
-      const filtered = allCategories.filter(c => c.type === type || c.type === 'both');
-      filtered.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.name;
-        opt.textContent = c.name;
-        select.appendChild(opt);
-      });
-    }
-
-    function populatePlannedCategories() {
-      const select = document.getElementById("plannedCategory");
-      select.innerHTML = '<option value="">Chọn danh mục...</option>';
-      const filtered = allCategories.filter(c => c.type === 'expense' || c.type === 'both');
-      filtered.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.name;
-        opt.textContent = c.name;
-        select.appendChild(opt);
-      });
-    }
-
-    // Auth & Init
+    // INIT
     async function initApp() {
       if (!supabaseClient) {
-        showToast("error", "Lỗi cấu hình Supabase!");
+        showToast('error', 'Lỗi kết nối Supabase Client!');
         return;
       }
-
-      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) {
-        window.location.href = "index.html";
+        window.location.href = 'index.html';
         return;
       }
-
       currentUser = session.user;
-      document.getElementById("userEmail").textContent = currentUser.email;
-      document.getElementById("userAvatar").textContent = currentUser.email.charAt(0).toUpperCase();
+
+      // Set user info
+      const fullname = currentUser.user_metadata?.fullname || currentUser.email.split('@')[0];
+      document.getElementById('userFullName').textContent = fullname;
+      document.getElementById('topUserFullName').textContent = fullname;
+      const initial = fullname.charAt(0).toUpperCase();
+      document.getElementById('userAvatar').textContent = initial;
+      document.getElementById('topUserAvatar').textContent = initial;
+
+      const now = new Date();
+      document.getElementById('currentDateBadge').textContent = formatDate(now);
+      document.getElementById('txDateInput').value = now.toISOString().slice(0, 10);
+      document.getElementById('plannedExpectedDate').value = now.toISOString().slice(0, 10);
+
+      // Setup numeric input formatting
+      setupCommaInput('amountInput');
+      setupCommaInput('plannedAmountInput');
+      setupCommaInput('editPlannedAmountInput');
+      setupCommaInput('actualAmountInput');
 
       await loadCategories();
       await loadData();
     }
 
     async function handleLogout() {
-      if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+      if (confirm('Bạn có chắc chắn muốn đăng xuất an toàn khỏi hệ thống?')) {
         await supabaseClient.auth.signOut();
-        window.location.href = "index.html";
+        window.location.href = 'index.html';
       }
     }
 
-    // Load Categories from Supabase
+    // LOAD CATEGORIES
     async function loadCategories() {
       try {
-        const { data, error } = await supabaseClient
-          .from("categories")
-          .select("*")
-          .order("name");
+        const { data, error } = await supabaseClient.from('categories').select('*').order('name');
         if (!error && data) {
           allCategories = data;
+          populateCategoryDropdowns();
+          renderCategoryManagerList();
         }
-      } catch (err) {
-        console.error("Load categories error:", err);
+      } catch (e) {
+        console.error('Load categories error:', e);
       }
     }
 
-    // Load Transactions & Planned Expenses
+    function populateCategoryDropdowns() {
+      const catSelect = document.getElementById('categorySelect');
+      const plannedCatSelect = document.getElementById('plannedCategorySelect');
+      const editPlannedCatSelect = document.getElementById('editPlannedCategorySelect');
+      const mgrParent = document.getElementById('mgrParentId');
+
+      catSelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+      plannedCatSelect.innerHTML = '<option value="">-- Chọn danh mục chính --</option>';
+      editPlannedCatSelect.innerHTML = '<option value="">-- Chọn danh mục chính --</option>';
+      mgrParent.innerHTML = '<option value="">-- Là danh mục chính --</option>';
+
+      allCategories.forEach(c => {
+        if (!c.parent_id) {
+          // Main category
+          const opt1 = new Option(c.name, c.name);
+          opt1.dataset.type = c.type;
+          catSelect.appendChild(opt1);
+
+          if (c.type !== 'income') {
+            plannedCatSelect.appendChild(new Option(c.name, c.name));
+            editPlannedCatSelect.appendChild(new Option(c.name, c.name));
+          }
+
+          mgrParent.appendChild(new Option(`Thuộc: ${c.name}`, c.id));
+        }
+      });
+
+      catSelect.appendChild(new Option('➕ Nhập danh mục khác...', '__custom__'));
+      plannedCatSelect.appendChild(new Option('➕ Nhập danh mục khác...', '__custom__'));
+    }
+
+    // Subcategory syncing for Add Transaction
+    function onTxCategoryChange(catName) {
+      if (catName === '__custom__') {
+        document.getElementById('categoryCustomInput').classList.remove('hidden');
+        document.getElementById('categoryCustomInput').focus();
+      } else {
+        document.getElementById('categoryCustomInput').classList.add('hidden');
+      }
+      updateTxSubcategories(catName);
+    }
+    function updateTxSubcategories(parentName) {
+      const subSelect = document.getElementById('subcategorySelect');
+      subSelect.innerHTML = '<option value="">-- Chọn danh mục con (Tùy chọn) --</option>';
+      const parent = allCategories.find(c => c.name === parentName);
+      if (parent) {
+        const subs = allCategories.filter(c => c.parent_id === parent.id);
+        subs.forEach(s => {
+          subSelect.appendChild(new Option(s.name, s.name));
+        });
+      }
+      subSelect.appendChild(new Option('➕ Nhập danh mục con khác...', '__custom__'));
+    }
+    function onTxSubcategoryChange(val) {
+      if (val === '__custom__') {
+        document.getElementById('subcategoryCustomInput').classList.remove('hidden');
+        document.getElementById('subcategoryCustomInput').focus();
+      } else {
+        document.getElementById('subcategoryCustomInput').classList.add('hidden');
+      }
+    }
+    function toggleTxCustomCat() {
+      const input = document.getElementById('categoryCustomInput');
+      input.classList.toggle('hidden');
+      if (!input.classList.contains('hidden')) input.focus();
+    }
+    function toggleTxCustomSub() {
+      const input = document.getElementById('subcategoryCustomInput');
+      input.classList.toggle('hidden');
+      if (!input.classList.contains('hidden')) input.focus();
+    }
+
+    // Subcategory syncing for Add Planned
+    function onPlannedCategoryChange(catName) {
+      if (catName === '__custom__') {
+        document.getElementById('plannedCategoryCustomInput').classList.remove('hidden');
+        document.getElementById('plannedCategoryCustomInput').focus();
+      } else {
+        document.getElementById('plannedCategoryCustomInput').classList.add('hidden');
+      }
+      const subSelect = document.getElementById('plannedSubcategorySelect');
+      subSelect.innerHTML = '<option value="">-- Chọn danh mục con (Tùy chọn) --</option>';
+      const parent = allCategories.find(c => c.name === catName);
+      if (parent) {
+        const subs = allCategories.filter(c => c.parent_id === parent.id);
+        subs.forEach(s => {
+          subSelect.appendChild(new Option(s.name, s.name));
+        });
+      }
+      subSelect.appendChild(new Option('➕ Nhập danh mục con khác...', '__custom__'));
+    }
+    function onPlannedSubcategoryChange(val) {
+      if (val === '__custom__') {
+        document.getElementById('plannedSubcategoryCustomInput').classList.remove('hidden');
+        document.getElementById('plannedSubcategoryCustomInput').focus();
+      } else {
+        document.getElementById('plannedSubcategoryCustomInput').classList.add('hidden');
+      }
+    }
+    function togglePlannedCustomCat() {
+      const input = document.getElementById('plannedCategoryCustomInput');
+      input.classList.toggle('hidden');
+      if (!input.classList.contains('hidden')) input.focus();
+    }
+    function togglePlannedCustomSub() {
+      const input = document.getElementById('plannedSubcategoryCustomInput');
+      input.classList.toggle('hidden');
+      if (!input.classList.contains('hidden')) input.focus();
+    }
+
+    // Repeat Frequency options
+    function toggleRepeatOptions(type) {
+      document.getElementById('monthlyDayWrapper').style.display = (type === 'monthly') ? 'flex' : 'none';
+      document.getElementById('weeklyWrapper').style.display = (type === 'weekly') ? 'flex' : 'none';
+      document.getElementById('customDaysWrapper').style.display = (type === 'custom_days') ? 'flex' : 'none';
+    }
+    function setWeeklyInterval(weeks) {
+      document.getElementById('plannedWeeklyInterval').value = weeks;
+      ['btnWeek1', 'btnWeek2', 'btnWeek4'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/[0.05] hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 transition cursor-pointer';
+      });
+      const active = document.getElementById('btnWeek' + weeks);
+      if (active) active.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 transition cursor-pointer';
+    }
+
+    // LOAD TRANSACTIONS & PLANNED
     async function loadData() {
       try {
-        // Fetch Transactions
-        const { data: trans, error: errTrans } = await supabaseClient
-          .from("transactions")
-          .select("*")
-          .order("transaction_date", { ascending: false })
-          .order("id", { ascending: false });
+        const { data: tx, error: errTx } = await supabaseClient
+          .from('transactions')
+          .select('*')
+          .order('transaction_date', { ascending: false })
+          .order('id', { ascending: false });
 
-        if (!errTrans && trans) {
-          allTransactions = trans;
-        }
+        if (!errTx && tx) allTransactions = tx;
 
-        // Fetch Planned Expenses
         const { data: planned, error: errPlan } = await supabaseClient
-          .from("planned_expenses")
-          .select("*")
-          .order("expected_date", { ascending: true });
+          .from('planned_expenses')
+          .select('*')
+          .order('expected_date', { ascending: true });
 
-        if (!errPlan && planned) {
-          allPlanned = planned;
-        }
+        if (!errPlan && planned) allPlanned = planned;
 
         renderStats();
         renderTransactions();
-        renderPlanned();
+        renderPlannedExpenses();
       } catch (err) {
-        console.error("Load data error:", err);
-        showToast("error", "Lỗi nạp dữ liệu: " + err.message);
+        console.error('Load data error:', err);
       }
     }
 
-    // Calculate and Render Stats
+    // RENDER STATS
     function renderStats() {
       let income = 0;
       let expense = 0;
-
       allTransactions.forEach(t => {
-        const val = parseFloat(t.amount) || 0;
-        if (t.type === 'income') income += val;
-        else if (t.type === 'expense') expense += val;
+        const amt = parseFloat(t.amount) || 0;
+        if (t.type === 'income') income += amt;
+        else if (t.type === 'expense') expense += amt;
       });
 
       const balance = income - expense;
+      document.getElementById('statBalance').innerHTML = `${(balance < 0 ? '-' : '') + formatNumber(Math.abs(balance))} <span class="text-xs font-normal text-slate-400">₫</span>`;
+      document.getElementById('statBalanceTrend').textContent = balance >= 0 ? '▲ Cân bằng tốt' : '▼ Cảnh báo bội chi';
+      document.getElementById('statBalanceTrend').className = balance >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold';
 
-      document.getElementById("statBalance").textContent = (balance < 0 ? '-' : '') + formatVND(Math.abs(balance));
-      document.getElementById("statBalance").className = "text-2xl sm:text-3xl font-extrabold font-mono tracking-tight " + (balance >= 0 ? "text-cyan-300" : "text-rose-400");
-      document.getElementById("statBalanceLabel").textContent = balance >= 0 ? "▲ Ngân sách thặng dư tốt" : "▼ Cảnh báo bội chi tài chính";
-      document.getElementById("statBalanceLabel").className = "text-[11px] font-semibold mt-2 " + (balance >= 0 ? "text-emerald-400" : "text-rose-400");
+      document.getElementById('statIncome').innerHTML = `+${formatNumber(income)} <span class="text-xs font-normal text-emerald-300/80">₫</span>`;
+      document.getElementById('statExpense').innerHTML = `-${formatNumber(expense)} <span class="text-xs font-normal text-rose-300/80">₫</span>`;
+      document.getElementById('statTxCount').innerHTML = `${allTransactions.length} <span class="text-xs font-normal text-slate-400">bản ghi</span>`;
 
-      document.getElementById("statIncome").textContent = "+" + formatVND(income);
-      document.getElementById("statExpense").textContent = "-" + formatVND(expense);
+      // Sidebar & top counts
+      document.getElementById('sidebarTransCount').textContent = allTransactions.length;
+      document.getElementById('sidebarCatCount').textContent = allCategories.length;
+      document.getElementById('topCatBadge').textContent = allCategories.length;
 
-      // Planned stats
-      let plannedPendingTotal = 0;
+      // Planned strip stats
+      let expPlanned = 0;
+      let actPlanned = 0;
       let pendingCount = 0;
+      let completedCount = 0;
+
       allPlanned.forEach(p => {
-        if (p.status === 'pending') {
-          plannedPendingTotal += parseFloat(p.expected_amount) || 0;
+        const exp = parseFloat(p.expected_amount) || 0;
+        expPlanned += exp;
+        if (p.status === 'completed') {
+          actPlanned += parseFloat(p.actual_amount ?? exp) || 0;
+          completedCount++;
+        } else {
           pendingCount++;
         }
       });
 
-      document.getElementById("statPlanned").textContent = formatVND(plannedPendingTotal);
-      document.getElementById("statPlannedSub").textContent = `${pendingCount} khoản cần thanh toán`;
+      document.getElementById('stripPlannedExpected').innerHTML = `${formatNumber(expPlanned)} <span class="text-[10px] font-normal text-slate-400">₫</span>`;
+      document.getElementById('stripPlannedActual').innerHTML = `${formatNumber(actPlanned)} <span class="text-[10px] font-normal text-slate-400">₫</span>`;
+      const rem = Math.max(0, expPlanned - actPlanned);
+      document.getElementById('stripPlannedRemaining').innerHTML = `${formatNumber(rem)} <span class="text-[10px] font-normal text-slate-400">₫</span>`;
+      
+      const diff = actPlanned - expPlanned;
+      const diffEl = document.getElementById('stripPlannedDiff');
+      diffEl.innerHTML = `${(diff > 0 ? '+' : '') + formatNumber(diff)} <span class="text-[10px] font-normal text-slate-400">₫</span>`;
+      diffEl.className = `text-base sm:text-lg font-extrabold font-mono ${diff > 0 ? 'text-rose-400' : (diff < 0 ? 'text-emerald-400' : 'text-slate-300')}`;
 
-      document.getElementById("navTransCount").textContent = allTransactions.length;
-      document.getElementById("navPlannedCount").textContent = `${pendingCount} chờ`;
+      document.getElementById('plannedHeaderCountBadge').textContent = `${allPlanned.length} khoản`;
+      document.getElementById('topPlannedBadge').textContent = pendingCount;
+      document.getElementById('sidebarPlannedCount').textContent = `${pendingCount} chờ`;
+      document.getElementById('btnPlannedFilterPending').textContent = `Chờ chi (${pendingCount})`;
+      document.getElementById('btnPlannedFilterCompleted').textContent = `Đã chi (${completedCount})`;
     }
 
-    // Render Transactions Table
-    function renderTransactions() {
-      const tbody = document.getElementById("transactionTableBody");
-      const searchVal = document.getElementById("searchInput").value.trim().toLowerCase();
-
-      let list = allTransactions.filter(t => {
-        if (currentFilter !== 'all' && t.type !== currentFilter) return false;
-        if (searchVal) {
-          const matchCat = (t.category || '').toLowerCase().includes(searchVal);
-          const matchNote = (t.note || '').toLowerCase().includes(searchVal);
-          return matchCat || matchNote;
-        }
-        return true;
+    // RENDER PLANNED EXPENSES TABLE
+    function renderPlannedExpenses() {
+      const tbody = document.getElementById('plannedTableBody');
+      let filtered = allPlanned.filter(p => {
+        if (currentPlannedFilter === 'all') return true;
+        return p.status === currentPlannedFilter;
       });
 
-      if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500">Chưa có giao dịch nào được ghi nhận</td></tr>`;
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-500">Chưa có khoản chi dự kiến nào phù hợp.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = list.map(t => {
-        const isIncome = t.type === 'income';
-        const colorClass = isIncome ? 'text-emerald-400' : 'text-rose-400';
-        const sign = isIncome ? '+' : '-';
-        const badgeClass = isIncome ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border-rose-500/20';
-        const badgeLabel = isIncome ? 'Thu nhập' : 'Chi tiêu';
+      tbody.innerHTML = filtered.map(pe => {
+        const isDone = pe.status === 'completed';
+        const expAmt = parseFloat(pe.expected_amount) || 0;
+        const actAmt = parseFloat(pe.actual_amount ?? 0);
+        const variance = isDone ? (actAmt - expAmt) : 0;
+        const subTag = pe.subcategory ? `<span class="text-slate-500 text-[10px]">›</span><span class="text-cyan-300 text-[11px] font-normal px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 font-medium">${pe.subcategory}</span>` : '';
 
         return `
-          <tr class="hover:bg-white/[0.02] transition">
-            <td class="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">${formatDate(t.transaction_date)}</td>
-            <td class="py-3 px-3">
-              <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold ${badgeClass}">
-                ${badgeLabel}
+          <tr class="hover:bg-white/[0.03] transition-colors">
+            <td class="py-3.5 pl-3">
+              ${isDone ? `
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  Đã chi
+                </span>
+              ` : `
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2.5"/><path stroke-linecap="round" d="M12 6v6l4 2"/></svg>
+                  Chờ chi
+                </span>
+              `}
+            </td>
+            <td class="py-3.5 font-semibold text-white">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span>${pe.category}</span>
+                ${subTag}
+              </div>
+            </td>
+            <td class="py-3.5 text-slate-300 max-w-xs truncate">${pe.title || '-'}</td>
+            <td class="py-3.5">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                ${formatRepeatBadge(pe.repeat_type, pe.repeat_interval, pe.day_of_month)}
               </span>
             </td>
-            <td class="py-3 px-3 font-semibold text-white">${t.category}</td>
-            <td class="py-3 px-3 text-slate-400 max-w-xs truncate">${t.note || '—'}</td>
-            <td class="py-3 px-3 text-right font-mono font-bold ${colorClass}">
-              ${sign}${formatVND(t.amount)}
+            <td class="py-3.5 font-mono text-[11px] text-slate-300">${formatDate(pe.expected_date)}</td>
+            <td class="py-3.5 text-right font-mono font-bold text-sm text-amber-300">${formatNumber(expAmt)} ₫</td>
+            <td class="py-3.5 text-right font-mono text-xs">
+              ${isDone ? `
+                <div class="font-bold text-emerald-400 text-sm">${formatNumber(actAmt)} ₫</div>
+                <div class="text-[10px] text-slate-400">
+                  ${pe.actual_date ? formatDate(pe.actual_date) : ''}
+                  ${variance !== 0 ? `<span class="${variance > 0 ? 'text-rose-400' : 'text-emerald-400'} font-semibold">(${variance > 0 ? '+' : ''}${formatNumber(variance)} ₫)</span>` : ''}
+                </div>
+              ` : `
+                <button type="button" onclick="openActualExpenseModal(${pe.id})" class="px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white font-bold text-[11px] transition shadow-sm cursor-pointer">
+                  Xác nhận chi
+                </button>
+              `}
             </td>
-            <td class="py-3 px-3 text-center">
-              <button 
-                onclick="deleteTransaction(${t.id})" 
-                class="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                title="Xóa giao dịch này"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+            <td class="py-3.5 pr-3 text-right">
+              <div class="flex items-center justify-end gap-1">
+                <button type="button" onclick="openEditPlannedModal(${pe.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer" title="Sửa khoản chi dự kiến">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </button>
+                <button type="button" onclick="deletePlannedExpense(${pe.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer" title="Xóa khoản dự kiến">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    // Filter & Search
-    function filterTransactions(type) {
-      currentFilter = type;
-      document.getElementById("btnFilterAll").className = type === 'all' ? "px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold" : "px-3 py-1 rounded-lg text-slate-400 hover:text-white";
-      document.getElementById("btnFilterIncome").className = type === 'income' ? "px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold" : "px-3 py-1 rounded-lg text-slate-400 hover:text-white";
-      document.getElementById("btnFilterExpense").className = type === 'expense' ? "px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300 font-bold" : "px-3 py-1 rounded-lg text-slate-400 hover:text-white";
-      renderTransactions();
+    function filterPlannedExpenses(status) {
+      currentPlannedFilter = status;
+      document.getElementById('btnPlannedFilterAll').className = status === 'all' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      document.getElementById('btnPlannedFilterPending').className = status === 'pending' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      document.getElementById('btnPlannedFilterCompleted').className = status === 'completed' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      renderPlannedExpenses();
     }
 
-    function handleSearch(val) {
-      renderTransactions();
-    }
+    // RENDER TRANSACTIONS TABLE
+    function renderTransactions() {
+      const tbody = document.getElementById('transactionTableBody');
+      const searchVal = document.getElementById('searchTxInput').value.trim().toLowerCase();
 
-    // Render Planned Expenses Cards
-    function renderPlanned() {
-      const container = document.getElementById("plannedList");
-      if (allPlanned.length === 0) {
-        container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs col-span-full">Chưa có kế hoạch chi tiêu nào</div>`;
+      let filtered = allTransactions.filter(t => {
+        if (currentTxFilter !== 'all' && t.type !== currentTxFilter) return false;
+        if (searchVal) {
+          const matchCat = (t.category || '').toLowerCase().includes(searchVal);
+          const matchSub = (t.subcategory || '').toLowerCase().includes(searchVal);
+          const matchNote = (t.note || '').toLowerCase().includes(searchVal);
+          return matchCat || matchSub || matchNote;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-slate-500">Chưa có giao dịch nào phù hợp. Bấm nút "Thêm thu chi" để tạo giao dịch đầu tiên!</td></tr>`;
         return;
       }
 
-      container.innerHTML = allPlanned.map(p => {
-        const isDone = p.status === 'completed';
-        const borderStyle = isDone ? 'border-white/10 opacity-60' : 'border-amber-500/30 bg-amber-500/[0.03]';
-        const statusBadge = isDone 
-          ? `<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">Đã chi trả</span>`
-          : `<span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">Chờ thanh toán</span>`;
+      tbody.innerHTML = filtered.map(t => {
+        const isIncome = t.type === 'income';
+        const colorClass = isIncome ? 'text-emerald-400' : 'text-rose-400';
+        const sign = isIncome ? '+' : '-';
+        const badgeBg = isIncome ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+        const badgeText = isIncome ? 'Thu nhập' : 'Khoản chi';
+        const subTag = t.subcategory ? `<span class="text-slate-500 text-[10px]">›</span><span class="text-cyan-300 text-[11px] font-normal px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 font-medium">${t.subcategory}</span>` : '';
 
         return `
-          <div class="card-glass p-4 rounded-2xl border ${borderStyle} flex flex-col justify-between space-y-3">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <h4 class="text-xs font-bold text-white ${isDone ? 'line-through text-slate-400' : ''}">${p.title}</h4>
-                <div class="text-[11px] text-cyan-400">${p.category}</div>
+          <tr class="hover:bg-white/[0.03] transition-colors cursor-pointer" onclick="openViewTransactionModal(${t.id})">
+            <td class="py-3.5 pl-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeBg}">
+                ${isIncome ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>' : '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 13l-5 5m0 0l-5-5m5 5V6"/></svg>'}
+                ${badgeText}
+              </span>
+            </td>
+            <td class="py-3.5 font-semibold text-white">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span>${t.category}</span>
+                ${subTag}
               </div>
-              ${statusBadge}
-            </div>
-
-            <div class="flex items-baseline justify-between">
-              <span class="text-xs text-slate-400">Dự kiến:</span>
-              <span class="text-sm font-bold font-mono text-amber-300">${formatVND(p.expected_amount)}</span>
-            </div>
-
-            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-white/[0.06]">
-              <span>Hạn: <strong class="text-white">${formatDate(p.expected_date)}</strong></span>
-              <div class="flex items-center gap-1.5">
-                <button 
-                  onclick="togglePlannedStatus(${p.id}, '${isDone ? 'pending' : 'completed'}', ${p.expected_amount})" 
-                  class="px-2 py-1 rounded-lg text-[10px] font-semibold ${isDone ? 'bg-white/5 text-slate-300' : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'} transition"
-                >
-                  ${isDone ? 'Mở lại' : 'Hoàn thành'}
+            </td>
+            <td class="py-3.5 text-slate-300 max-w-xs truncate">${t.note || '—'}</td>
+            <td class="py-3.5 font-mono text-[11px] text-slate-400 whitespace-nowrap">${formatDate(t.transaction_date)}</td>
+            <td class="py-3.5 text-right font-mono font-bold text-sm ${colorClass} whitespace-nowrap">
+              ${sign}${formatNumber(t.amount)} ₫
+            </td>
+            <td class="py-3.5 pr-3 text-right" onclick="event.stopPropagation()">
+              <div class="flex items-center justify-end gap-1">
+                <button type="button" onclick="openViewTransactionModal(${t.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors cursor-pointer" title="Xem chi tiết">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 </button>
-                <button 
-                  onclick="deletePlannedExpense(${p.id})" 
-                  class="p-1 text-slate-500 hover:text-rose-400 transition"
-                  title="Xóa kế hoạch"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                <button type="button" onclick="deleteTransaction(${t.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer" title="Xóa giao dịch">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterTransactions(type) {
+      currentTxFilter = type;
+      document.getElementById('btnTxFilterAll').className = type === 'all' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-cyan-500/20 text-cyan-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      document.getElementById('btnTxFilterIncome').className = type === 'income' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-400 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      document.getElementById('btnTxFilterExpense').className = type === 'expense' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-rose-500/20 text-rose-400 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      renderTransactions();
+    }
+    function handleSearchTransactions(val) {
+      renderTransactions();
+    }
+
+    // MODAL ADD TRANSACTION
+    function openAddModal(type = 'expense') {
+      const form = document.getElementById('addTransactionForm');
+      form.reset();
+      const radio = form.querySelector(`input[name="type"][value="${type}"]`);
+      if (radio) radio.checked = true;
+      document.getElementById('txDateInput').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('categoryCustomInput').classList.add('hidden');
+      document.getElementById('subcategoryCustomInput').classList.add('hidden');
+      openModal('addModal');
+    }
+    function closeAddModal() {
+      closeModal('addModal');
+    }
+
+    async function submitTransaction(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnAddSubmit');
+      btn.disabled = true;
+      btn.textContent = 'Đang lưu...';
+
+      const type = document.querySelector('input[name="type"]:checked').value;
+      const catSelect = document.getElementById('categorySelect').value;
+      const catCustom = document.getElementById('categoryCustomInput').value.trim();
+      const category = (catSelect === '__custom__' || !catSelect) ? catCustom : catSelect;
+
+      const subSelect = document.getElementById('subcategorySelect').value;
+      const subCustom = document.getElementById('subcategoryCustomInput').value.trim();
+      const subcategory = (subSelect === '__custom__' || !subSelect) ? subCustom : subSelect;
+
+      const amount = unformatNumber(document.getElementById('amountInput').value);
+      const transaction_date = document.getElementById('txDateInput').value;
+      const note = document.getElementById('txNoteInput').value.trim();
+
+      if (!category) {
+        showToast('error', 'Vui lòng chọn hoặc nhập tên danh mục!');
+        btn.disabled = false;
+        btn.textContent = 'Lưu giao dịch';
+        return;
+      }
+      if (amount <= 0) {
+        showToast('error', 'Số tiền phải lớn hơn 0!');
+        btn.disabled = false;
+        btn.textContent = 'Lưu giao dịch';
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient.from('transactions').insert([{
+          user_id: currentUser.id,
+          type,
+          category,
+          subcategory: subcategory || null,
+          amount,
+          transaction_date,
+          note: note || null
+        }]);
+
+        if (error) throw error;
+        showToast('success', 'Đã lưu giao dịch thành công!');
+        closeAddModal();
+        await loadData();
+      } catch (err) {
+        showToast('error', 'Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Lưu giao dịch';
+      }
+    }
+
+    async function deleteTransaction(id) {
+      if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giao dịch này?')) return;
+      try {
+        const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
+        if (error) throw error;
+        showToast('success', 'Đã xóa giao dịch thành công!');
+        closeViewTransactionModal();
+        await loadData();
+      } catch (err) {
+        showToast('error', 'Không thể xóa: ' + err.message);
+      }
+    }
+
+    // VIEW TRANSACTION MODAL
+    function openViewTransactionModal(id) {
+      const t = allTransactions.find(x => x.id === id);
+      if (!t) return;
+      currentViewingTxId = id;
+      const isIncome = t.type === 'income';
+
+      document.getElementById('viewTxId').textContent = `#${t.id}`;
+      document.getElementById('viewTxTypeBadge').textContent = isIncome ? 'Thu nhập' : 'Khoản chi';
+      document.getElementById('viewTxTypeBadge').className = `inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${isIncome ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}`;
+      document.getElementById('viewTxAmount').textContent = `${isIncome ? '+' : '-'}${formatNumber(t.amount)} ₫`;
+      document.getElementById('viewTxAmount').className = `text-2xl sm:text-3xl font-extrabold font-mono ${isIncome ? 'text-emerald-400' : 'text-rose-400'}`;
+      document.getElementById('viewTxCategory').textContent = t.category + (t.subcategory ? ` › ${t.subcategory}` : '');
+      document.getElementById('viewTxDate').textContent = formatDate(t.transaction_date);
+      document.getElementById('viewTxNote').textContent = t.note || '—';
+
+      document.getElementById('btnDeleteFromView').onclick = () => deleteTransaction(id);
+      openModal('viewTransactionModal');
+    }
+    function closeViewTransactionModal() {
+      closeModal('viewTransactionModal');
+    }
+
+    // MODAL ADD PLANNED EXPENSE
+    function openAddPlannedModal() {
+      document.getElementById('addPlannedForm').reset();
+      document.getElementById('plannedExpectedDate').value = new Date().toISOString().slice(0, 10);
+      toggleRepeatOptions('monthly');
+      openModal('addPlannedModal');
+    }
+    function closeAddPlannedModal() {
+      closeModal('addPlannedModal');
+    }
+
+    async function submitPlannedExpense(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnAddPlannedSubmit');
+      btn.disabled = true;
+      btn.textContent = 'Đang lưu...';
+
+      const catSelect = document.getElementById('plannedCategorySelect').value;
+      const catCustom = document.getElementById('plannedCategoryCustomInput').value.trim();
+      const category = (catSelect === '__custom__' || !catSelect) ? catCustom : catSelect;
+
+      const subSelect = document.getElementById('plannedSubcategorySelect').value;
+      const subCustom = document.getElementById('plannedSubcategoryCustomInput').value.trim();
+      const subcategory = (subSelect === '__custom__' || !subSelect) ? subCustom : subSelect;
+
+      const title = document.getElementById('plannedTitleInput').value.trim() || 'Khoản chi dự kiến';
+      const expected_amount = unformatNumber(document.getElementById('plannedAmountInput').value);
+      const expected_date = document.getElementById('plannedExpectedDate').value;
+      const repeat_type = document.querySelector('input[name="repeat_type"]:checked').value;
+      const note = document.getElementById('plannedNoteInput').value.trim();
+
+      if (!category) {
+        showToast('error', 'Vui lòng chọn hoặc nhập danh mục chính!');
+        btn.disabled = false;
+        btn.textContent = 'Lưu khoản chi dự kiến';
+        return;
+      }
+      if (expected_amount <= 0) {
+        showToast('error', 'Số tiền dự kiến phải lớn hơn 0!');
+        btn.disabled = false;
+        btn.textContent = 'Lưu khoản chi dự kiến';
+        return;
+      }
+
+      let repeat_interval = 1;
+      let day_of_month = null;
+      if (repeat_type === 'monthly') {
+        day_of_month = parseInt(document.getElementById('plannedDayOfMonth').value, 10) || new Date(expected_date).getDate();
+      } else if (repeat_type === 'weekly') {
+        repeat_interval = parseInt(document.getElementById('plannedWeeklyInterval').value, 10) || 1;
+      } else if (repeat_type === 'custom_days') {
+        repeat_interval = parseInt(document.getElementById('plannedCustomInterval').value, 10) || 3;
+      }
+
+      try {
+        const { error } = await supabaseClient.from('planned_expenses').insert([{
+          user_id: currentUser.id,
+          title,
+          category,
+          expected_amount,
+          expected_date,
+          status: 'pending',
+          note: note || null
+        }]);
+
+        if (error) throw error;
+        showToast('success', 'Đã lưu kế hoạch chi tiêu mới!');
+        closeAddPlannedModal();
+        await loadData();
+      } catch (err) {
+        showToast('error', 'Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Lưu khoản chi dự kiến';
+      }
+    }
+
+    async function deletePlannedExpense(id) {
+      if (!confirm('Bạn có chắc chắn muốn xóa kế hoạch chi tiêu này?')) return;
+      try {
+        const { error } = await supabaseClient.from('planned_expenses').delete().eq('id', id);
+        if (error) throw error;
+        showToast('success', 'Đã xóa kế hoạch chi tiêu!');
+        await loadData();
+      } catch (err) {
+        showToast('error', 'Không thể xóa: ' + err.message);
+      }
+    }
+
+    // MODAL ACTUAL EXPENSE (XÁC NHẬN THỰC CHI)
+    function openActualExpenseModal(id) {
+      const pe = allPlanned.find(x => x.id === id);
+      if (!pe) return;
+
+      document.getElementById('actualModalPlannedId').value = pe.id;
+      document.getElementById('actualModalCatBadge').textContent = pe.category + (pe.subcategory ? ` › ${pe.subcategory}` : '');
+      document.getElementById('actualModalExpectedDate').textContent = formatDate(pe.expected_date);
+      document.getElementById('actualModalExpectedAmount').textContent = `${formatNumber(pe.expected_amount)} ₫`;
+      document.getElementById('actualModalBaseExpected').value = pe.expected_amount;
+
+      document.getElementById('actualDateInput').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('actualAmountInput').value = formatNumber(pe.expected_amount);
+      document.getElementById('actualNoteInput').value = pe.note || '';
+      calculateActualVariance();
+
+      openModal('actualExpenseModal');
+    }
+    function closeActualExpenseModal() {
+      closeModal('actualExpenseModal');
+    }
+
+    function calculateActualVariance() {
+      const exp = parseFloat(document.getElementById('actualModalBaseExpected').value) || 0;
+      const act = unformatNumber(document.getElementById('actualAmountInput').value) || 0;
+      const diff = act - exp;
+      const badge = document.getElementById('actualVarianceBadge');
+      if (diff === 0) {
+        badge.textContent = 'Chuẩn khớp 100%';
+        badge.className = 'text-[11px] font-mono font-bold text-emerald-400';
+      } else if (diff > 0) {
+        badge.textContent = `Vượt ngân sách (+${formatNumber(diff)} ₫)`;
+        badge.className = 'text-[11px] font-mono font-bold text-rose-400';
+      } else {
+        badge.textContent = `Tiết kiệm (${formatNumber(Math.abs(diff))} ₫)`;
+        badge.className = 'text-[11px] font-mono font-bold text-emerald-400';
+      }
+    }
+
+    async function submitActualExpense(e) {
+      e.preventDefault();
+      const id = document.getElementById('actualModalPlannedId').value;
+      const actual_date = document.getElementById('actualDateInput').value;
+      const actual_amount = unformatNumber(document.getElementById('actualAmountInput').value);
+      const note = document.getElementById('actualNoteInput').value.trim();
+      const recordToTx = document.getElementById('actualRecordToTx').checked;
+      const btn = document.getElementById('btnSaveActualSubmit');
+
+      btn.disabled = true;
+      btn.textContent = 'Đang lưu...';
+
+      try {
+        // 1. Update planned expense to completed
+        const { error: errPlan } = await supabaseClient
+          .from('planned_expenses')
+          .update({
+            status: 'completed',
+            actual_amount,
+            actual_date,
+            note: note || null
+          })
+          .eq('id', id);
+
+        if (errPlan) throw errPlan;
+
+        // 2. Optionally record into transactions table
+        if (recordToTx) {
+          const pe = allPlanned.find(x => x.id == id);
+          await supabaseClient.from('transactions').insert([{
+            user_id: currentUser.id,
+            type: 'expense',
+            category: pe ? pe.category : 'Chi tiêu định kỳ',
+            subcategory: pe ? pe.subcategory : null,
+            amount: actual_amount,
+            transaction_date: actual_date,
+            note: `[Định kỳ] ${pe?.title || ''} ${note ? ' - ' + note : ''}`
+          }]);
+        }
+
+        showToast('success', 'Đã xác nhận thực chi thành công!');
+        closeActualExpenseModal();
+        await loadData();
+      } catch (err) {
+        showToast('error', 'Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Xác nhận đã chi & Lưu';
+      }
+    }
+
+    // MODAL EDIT PLANNED EXPENSE
+    function openEditPlannedModal(id) {
+      const pe = allPlanned.find(x => x.id === id);
+      if (!pe) return;
+
+      document.getElementById('editPlannedId').value = pe.id;
+      document.getElementById('editPlannedCategorySelect').value = pe.category;
+      document.getElementById('editPlannedSubcategoryInput').value = pe.subcategory || '';
+      document.getElementById('editPlannedTitle').value = pe.title || '';
+      document.getElementById('editPlannedAmountInput').value = formatNumber(pe.expected_amount);
+      document.getElementById('editPlannedExpectedDate').value = pe.expected_date;
+      document.getElementById('editPlannedNote').value = pe.note || '';
+
+      openModal('editPlannedModal');
+    }
+    function closeEditPlannedModal() {
+      closeModal('editPlannedModal');
+    }
+
+    async function submitEditPlannedExpense(e) {
+      e.preventDefault();
+      const id = document.getElementById('editPlannedId').value;
+      const category = document.getElementById('editPlannedCategorySelect').value;
+      const subcategory = document.getElementById('editPlannedSubcategoryInput').value.trim();
+      const title = document.getElementById('editPlannedTitle').value.trim();
+      const expected_amount = unformatNumber(document.getElementById('editPlannedAmountInput').value);
+      const expected_date = document.getElementById('editPlannedExpectedDate').value;
+      const note = document.getElementById('editPlannedNote').value.trim();
+      const btn = document.getElementById('btnEditPlannedSubmit');
+
+      btn.disabled = true;
+      btn.textContent = 'Đang cập nhật...';
+
+      try {
+        const { error } = await supabaseClient
+          .from('planned_expenses')
+          .update({
+            category,
+            title,
+            expected_amount,
+            expected_date,
+            note: note || null
+          })
+          .eq('id', id);
+
+        if (error) throw error;
+        showToast('success', 'Đã cập nhật kế hoạch chi tiêu!');
+        closeEditPlannedModal();
+        await loadData();
+      } catch (err) {
+        showToast('error', 'Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cập nhật khoản chi dự kiến';
+      }
+    }
+
+    // MODAL ADD CATEGORY
+    function openAddCategoryModal() {
+      document.getElementById('addCategoryForm').reset();
+      openModal('addCategoryModal');
+    }
+    function closeAddCategoryModal() {
+      closeModal('addCategoryModal');
+    }
+    async function submitNewCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('modalCatName').value.trim();
+      const type = document.querySelector('input[name="cat_type"]:checked').value;
+      const btn = document.getElementById('btnSaveCategory');
+
+      btn.disabled = true;
+      btn.textContent = 'Đang lưu...';
+
+      try {
+        const { error } = await supabaseClient.from('categories').insert([{
+          user_id: currentUser.id,
+          name,
+          type
+        }]);
+
+        if (error) throw error;
+        showToast('success', 'Đã tạo danh mục mới!');
+        closeAddCategoryModal();
+        await loadCategories();
+      } catch (err) {
+        showToast('error', 'Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Lưu danh mục';
+      }
+    }
+
+    // MODAL CATEGORY MANAGER
+    function openCategoryManagerModal() {
+      renderCategoryManagerList();
+      openModal('categoryManagerModal');
+    }
+    function closeCategoryManagerModal() {
+      closeModal('categoryManagerModal');
+    }
+
+    function renderCategoryManagerList(filterType = 'all') {
+      const container = document.getElementById('categoryCardsContainer');
+      const mains = allCategories.filter(c => !c.parent_id);
+      let filtered = mains.filter(c => filterType === 'all' || c.type === filterType || c.type === 'both');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs">Chưa có danh mục nào.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        const subs = allCategories.filter(s => s.parent_id === c.id);
+        const dotColor = c.type === 'income' ? 'bg-emerald-400' : (c.type === 'expense' ? 'bg-rose-400' : 'bg-cyan-400');
+        const typeText = c.type === 'income' ? 'Thu nhập (+)' : (c.type === 'expense' ? 'Khoản chi (-)' : 'Dùng chung');
+
+        return `
+          <div class="cat-card p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.06] transition">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
+                <div>
+                  <div class="text-xs font-bold text-white">${c.name}</div>
+                  <div class="text-[10px] text-slate-400">
+                    ${typeText} ${subs.length > 0 ? `&bull; <span class="text-cyan-400 font-semibold">${subs.length} danh mục con</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="quickAddSubcategory(${c.id}, '${c.name.replace(/'/g, "\\'")}')" class="text-[11px] px-2.5 py-1 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold flex items-center gap-1 transition cursor-pointer">
+                  <span>+ Con</span>
+                </button>
+                <button type="button" onclick="deleteCategory(${c.id})" class="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
             </div>
+            ${subs.length > 0 ? `
+              <div class="mt-2.5 pt-2 border-t border-white/[0.04] flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] text-slate-400 font-semibold uppercase">Danh mục con:</span>
+                ${subs.map(s => `
+                  <span class="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-lg bg-white/[0.04] border border-white/10 text-slate-200">
+                    <span>${s.name}</span>
+                    <button type="button" onclick="deleteCategory(${s.id})" class="text-slate-400 hover:text-rose-400 transition cursor-pointer font-bold">&times;</button>
+                  </span>
+                `).join('')}
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
     }
 
-    // Submit New Transaction to Supabase
-    async function submitTransaction(e) {
+    function filterCategoryCards(type) {
+      document.getElementById('btnMgrCatAll').className = type === 'all' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-purple-500/20 text-purple-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      document.getElementById('btnMgrCatIncome').className = type === 'income' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-purple-500/20 text-purple-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      document.getElementById('btnMgrCatExpense').className = type === 'expense' ? 'px-3 py-1 rounded-xl text-xs font-semibold bg-purple-500/20 text-purple-300 cursor-pointer' : 'px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-white cursor-pointer';
+      renderCategoryManagerList(type);
+    }
+
+    async function submitCategoryFromManager(e) {
       e.preventDefault();
-      const btn = document.getElementById("btnSubmitTrans");
-      btn.disabled = true;
-      btn.textContent = "Đang lưu...";
-
-      const type = document.querySelector('input[name="transType"]:checked').value;
-      const amount = parseFloat(document.getElementById("transAmount").value);
-      const category = document.getElementById("transCategory").value;
-      const transaction_date = document.getElementById("transDate").value;
-      const note = document.getElementById("transNote").value.trim();
+      const name = document.getElementById('mgrCatName').value.trim();
+      const type = document.getElementById('mgrCatType').value;
+      const parent_id = parseInt(document.getElementById('mgrParentId').value, 10) || null;
 
       try {
-        const { error } = await supabaseClient.from("transactions").insert([
-          {
-            user_id: currentUser.id,
-            type,
-            amount,
-            category,
-            transaction_date,
-            note: note || null
-          }
-        ]);
+        const { error } = await supabaseClient.from('categories').insert([{
+          user_id: currentUser.id,
+          name,
+          type,
+          parent_id
+        }]);
 
         if (error) throw error;
-
-        showToast("success", "Đã thêm giao dịch mới thành công!");
-        closeModal("addModal");
-        document.getElementById("addTransForm").reset();
-        await loadData();
+        showToast('success', 'Đã thêm danh mục thành công!');
+        document.getElementById('mgrCatName').value = '';
+        await loadCategories();
       } catch (err) {
-        showToast("error", "Lỗi: " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Lưu giao dịch";
+        showToast('error', 'Lỗi: ' + err.message);
       }
     }
 
-    // Delete Transaction
-    async function deleteTransaction(id) {
-      if (!confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return;
+    async function quickAddSubcategory(parentId, parentName) {
+      const subName = prompt(`Nhập tên danh mục con cho "${parentName}":`);
+      if (!subName || !subName.trim()) return;
+
       try {
-        const { error } = await supabaseClient.from("transactions").delete().eq("id", id);
+        const { error } = await supabaseClient.from('categories').insert([{
+          user_id: currentUser.id,
+          name: subName.trim(),
+          type: 'expense',
+          parent_id: parentId
+        }]);
+
         if (error) throw error;
-        showToast("success", "Đã xóa giao dịch!");
-        await loadData();
+        showToast('success', 'Đã thêm danh mục con thành công!');
+        await loadCategories();
       } catch (err) {
-        showToast("error", "Không thể xóa: " + err.message);
+        showToast('error', 'Lỗi: ' + err.message);
       }
     }
 
-    // Submit Planned Expense to Supabase
-    async function submitPlannedExpense(e) {
-      e.preventDefault();
-      const btn = document.getElementById("btnSubmitPlanned");
-      btn.disabled = true;
-      btn.textContent = "Đang tạo...";
-
-      const title = document.getElementById("plannedTitle").value.trim();
-      const expected_amount = parseFloat(document.getElementById("plannedAmount").value);
-      const category = document.getElementById("plannedCategory").value;
-      const expected_date = document.getElementById("plannedDate").value;
-      const note = document.getElementById("plannedNote").value.trim();
-
+    async function deleteCategory(id) {
+      if (!confirm('Bạn có chắc chắn muốn xóa danh mục này?')) return;
       try {
-        const { error } = await supabaseClient.from("planned_expenses").insert([
-          {
-            user_id: currentUser.id,
-            title,
-            expected_amount,
-            category,
-            expected_date,
-            status: 'pending',
-            note: note || null
-          }
-        ]);
-
+        const { error } = await supabaseClient.from('categories').delete().eq('id', id);
         if (error) throw error;
-
-        showToast("success", "Đã tạo kế hoạch chi tiêu mới!");
-        closeModal("addPlannedModal");
-        document.getElementById("addPlannedForm").reset();
-        await loadData();
+        showToast('success', 'Đã xóa danh mục!');
+        await loadCategories();
       } catch (err) {
-        showToast("error", "Lỗi: " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Tạo kế hoạch chi";
+        showToast('error', 'Không thể xóa: ' + err.message);
       }
     }
 
-    // Toggle Planned Expense Status
-    async function togglePlannedStatus(id, newStatus, amount) {
-      try {
-        const { error } = await supabaseClient
-          .from("planned_expenses")
-          .update({
-            status: newStatus,
-            actual_amount: newStatus === 'completed' ? amount : null
-          })
-          .eq("id", id);
+    // MODAL ANALYTICS
+    function openAnalyticsModal() {
+      let income = 0;
+      let expense = 0;
+      const expenseByCat = {};
 
-        if (error) throw error;
+      allTransactions.forEach(t => {
+        const amt = parseFloat(t.amount) || 0;
+        if (t.type === 'income') {
+          income += amt;
+        } else {
+          expense += amt;
+          expenseByCat[t.category] = (expenseByCat[t.category] || 0) + amt;
+        }
+      });
 
-        showToast("success", newStatus === 'completed' ? "Đã đánh dấu hoàn thành!" : "Đã chuyển về trạng thái chờ!");
-        await loadData();
-      } catch (err) {
-        showToast("error", "Lỗi: " + err.message);
+      const total = income + expense;
+      const incPct = total > 0 ? Math.round((income / total) * 100) : 50;
+      const expPct = total > 0 ? (100 - incPct) : 50;
+
+      document.getElementById('analyticsIncomeRatio').textContent = `Thu: ${incPct}%`;
+      document.getElementById('analyticsExpenseRatio').textContent = `Chi: ${expPct}%`;
+      document.getElementById('analyticsIncomeBar').style.width = `${incPct}%`;
+      document.getElementById('analyticsExpenseBar').style.width = `${expPct}%`;
+
+      const listContainer = document.getElementById('analyticsTopExpenseList');
+      const sorted = Object.entries(expenseByCat).sort((a, b) => b[1] - a[1]);
+
+      if (sorted.length === 0) {
+        listContainer.innerHTML = '<div class="text-xs text-slate-500 italic">Chưa có dữ liệu chi tiêu</div>';
+      } else {
+        listContainer.innerHTML = sorted.slice(0, 5).map(([catName, amt]) => {
+          const pct = expense > 0 ? Math.round((amt / expense) * 100) : 0;
+          return `
+            <div class="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-medium text-slate-200">${catName}</span>
+                <span class="font-mono text-rose-400 font-bold">${formatNumber(amt)} ₫ (${pct}%)</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                <div class="h-full bg-rose-500/80 rounded-full" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
+
+      openModal('analyticsModal');
     }
-
-    // Delete Planned Expense
-    async function deletePlannedExpense(id) {
-      if (!confirm("Bạn có chắc chắn muốn xóa kế hoạch này?")) return;
-      try {
-        const { error } = await supabaseClient.from("planned_expenses").delete().eq("id", id);
-        if (error) throw error;
-        showToast("success", "Đã xóa kế hoạch chi tiêu!");
-        await loadData();
-      } catch (err) {
-        showToast("error", "Không thể xóa: " + err.message);
-      }
+    function closeAnalyticsModal() {
+      closeModal('analyticsModal');
     }
 
     // Run on startup
-    window.addEventListener("DOMContentLoaded", initApp);
+    window.addEventListener('DOMContentLoaded', initApp);
   </script>
 </body>
 </html>

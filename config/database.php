@@ -4,7 +4,10 @@
  * Tự động chuyển đổi giữa Localhost (WAMP) và Hosting (InfinityFree)
  */
 
-if ($_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false) {
+// Tự động nhận diện localhost (trình duyệt hoặc CLI) hay Hosting
+$is_local = !isset($_SERVER['HTTP_HOST']) || $_SERVER['HTTP_HOST'] === 'localhost' || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false;
+
+if ($is_local) {
     // 1. Cấu hình chạy trên máy tính cá nhân (WAMP Localhost)
     $db_host = '127.0.0.1';
     $db_name = 'cashtrack';
